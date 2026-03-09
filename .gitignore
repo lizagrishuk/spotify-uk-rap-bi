@@ -1,0 +1,15 @@
+# Данные — не коммитим сырые CSV
+data/raw/
+data/stage/
+*.db
+
+# Kaggle credentials
+.kaggle/
+kaggle.json
+
+# Python
+__pycache__/
+*.pyc
+.env
+venv/
+.venv/
