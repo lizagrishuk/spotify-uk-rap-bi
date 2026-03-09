@@ -1,787 +1,481 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>UK Rap · Spotify BI Dashboard</title>
+<title>UK Rap · Spotify Analytics</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg:       #080c10;
-    --panel:    #0d1219;
-    --border:   #1a2535;
-    --green:    #1db954;
-    --green2:   #14a347;
-    --cyan:     #00d4ff;
-    --yellow:   #ffd60a;
-    --red:      #ff3b5c;
-    --purple:   #b04aff;
-    --text:     #e8edf4;
-    --muted:    #5a6a80;
-    --card-bg:  #111822;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Syne', sans-serif;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#0a0d12; --surface:#111720; --card:#141c27;
+  --border:rgba(255,255,255,0.07);
+  --green:#1ed760; --green-dim:rgba(30,215,96,0.12);
+  --cyan:#29d4e0; --yellow:#f5c518; --red:#e8445a; --purple:#a855f7;
+  --text:#e2e8f0; --muted:#4a5568; --muted2:#718096;
+}
+html,body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; font-size:14px; min-height:100vh; }
 
-  /* ── SCAN LINES OVERLAY ── */
-  body::before {
-    content: '';
-    position: fixed; inset: 0; pointer-events: none; z-index: 999;
-    background: repeating-linear-gradient(
-      0deg, transparent, transparent 2px,
-      rgba(0,0,0,.18) 2px, rgba(0,0,0,.18) 4px
-    );
-  }
+header { display:flex; align-items:center; justify-content:space-between; padding:16px 28px; border-bottom:1px solid var(--border); background:var(--surface); }
+.logo { display:flex; align-items:center; gap:12px; }
+.logo-mark { width:36px; height:36px; border-radius:50%; background:var(--green); display:grid; place-items:center; flex-shrink:0; }
+.logo-mark svg { width:18px; height:18px; fill:#000; }
+.logo-title { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:1px; line-height:1; }
+.logo-sub { font-family:'DM Mono',monospace; font-size:9px; color:var(--muted2); letter-spacing:2px; margin-top:2px; }
+.header-right { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted2); text-align:right; }
+.live { display:flex; align-items:center; gap:6px; justify-content:flex-end; margin-bottom:2px; }
+.live-dot { width:6px; height:6px; border-radius:50%; background:var(--green); animation:blink 2s ease infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-  /* ── HEADER ── */
-  header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 18px 32px 16px;
-    border-bottom: 1px solid var(--border);
-    background: linear-gradient(90deg, #0d1219 60%, #0a1520);
-    position: sticky; top: 0; z-index: 100;
-  }
-  .logo {
-    display: flex; align-items: center; gap: 14px;
-  }
-  .logo-icon {
-    width: 38px; height: 38px; border-radius: 50%;
-    background: var(--green);
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 0 20px rgba(29,185,84,.5);
-  }
-  .logo-icon svg { width: 20px; height: 20px; fill: #000; }
-  .logo-text { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
-  .logo-sub  { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 2px; margin-top: 1px; }
-  .header-meta {
-    font-family: 'Space Mono', monospace; font-size: 11px; color: var(--muted);
-    text-align: right;
-  }
-  .live-dot {
-    display: inline-block; width: 7px; height: 7px; border-radius: 50%;
-    background: var(--green); margin-right: 6px;
-    animation: pulse 2s infinite;
-  }
-  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.3;} }
+.filters { display:flex; gap:16px; align-items:flex-end; flex-wrap:wrap; padding:14px 28px; border-bottom:1px solid var(--border); background:var(--surface); }
+.filter-label { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--muted); margin-bottom:4px; }
+.filter-group { display:flex; flex-direction:column; }
+.seg { display:flex; }
+.seg button { font-family:'DM Mono',monospace; font-size:11px; padding:5px 12px; cursor:pointer; background:var(--card); border:1px solid var(--border); color:var(--muted2); transition:all .15s; }
+.seg button:first-child { border-radius:5px 0 0 5px; }
+.seg button:last-child  { border-radius:0 5px 5px 0; }
+.seg button:not(:first-child) { border-left:none; }
+.seg button.on { background:var(--green); color:#000; border-color:var(--green); font-weight:500; }
+select { font-family:'DM Mono',monospace; font-size:11px; padding:5px 10px; background:var(--card); border:1px solid var(--border); color:var(--muted2); border-radius:5px; cursor:pointer; outline:none; appearance:none; }
+select:focus { border-color:var(--green); }
+.reset-btn { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:1px; padding:5px 14px; background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:5px; cursor:pointer; transition:all .15s; }
+.reset-btn:hover { border-color:var(--red); color:var(--red); }
 
-  /* ── FILTERS ── */
-  .filters {
-    display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end;
-    padding: 18px 32px;
-    border-bottom: 1px solid var(--border);
-    background: var(--panel);
-  }
-  .filter-group { display: flex; flex-direction: column; gap: 5px; }
-  .filter-group label {
-    font-family: 'Space Mono', monospace; font-size: 9px;
-    letter-spacing: 2px; color: var(--muted); text-transform: uppercase;
-  }
-  select, .btn-group button {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    color: var(--text);
-    font-family: 'Syne', sans-serif;
-    font-size: 13px;
-    padding: 7px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    outline: none;
-    transition: border-color .2s, background .2s;
-    appearance: none;
-    -webkit-appearance: none;
-  }
-  select:hover, .btn-group button:hover { border-color: var(--green); }
-  .btn-group { display: flex; gap: 0; }
-  .btn-group button {
-    border-radius: 0;
-    padding: 7px 14px;
-  }
-  .btn-group button:first-child { border-radius: 6px 0 0 6px; }
-  .btn-group button:last-child  { border-radius: 0 6px 6px 0; }
-  .btn-group button.active { background: var(--green); color: #000; border-color: var(--green); font-weight: 700; }
-  .filter-reset {
-    background: transparent; border: 1px solid var(--border); color: var(--muted);
-    font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 1px;
-    padding: 7px 14px; border-radius: 6px; cursor: pointer;
-    transition: all .2s; align-self: flex-end;
-  }
-  .filter-reset:hover { border-color: var(--red); color: var(--red); }
+.page { padding:20px 28px; display:flex; flex-direction:column; gap:16px; }
 
-  /* ── MAIN GRID ── */
-  .main { padding: 24px 32px; display: flex; flex-direction: column; gap: 20px; }
+.kpi-row { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; }
+.kpi { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px 18px; position:relative; overflow:hidden; }
+.kpi::after { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--c,var(--green)); }
+.kpi-label { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--muted2); margin-bottom:10px; }
+.kpi-val { font-family:'Bebas Neue',sans-serif; font-size:34px; line-height:1; color:var(--text); }
+.kpi-delta { font-family:'DM Mono',monospace; font-size:10px; margin-top:6px; }
+.up { color:var(--green); } .down { color:var(--red); }
 
-  /* ── KPI ROW ── */
-  .kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
-  .kpi-card {
-    background: var(--card-bg); border: 1px solid var(--border);
-    border-radius: 12px; padding: 18px 20px;
-    position: relative; overflow: hidden;
-    transition: border-color .25s, transform .2s;
-  }
-  .kpi-card:hover { border-color: var(--green); transform: translateY(-2px); }
-  .kpi-card::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-    background: var(--accent, var(--green));
-  }
-  .kpi-label {
-    font-family: 'Space Mono', monospace; font-size: 9px;
-    letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 10px;
-  }
-  .kpi-val {
-    font-size: 28px; font-weight: 800; line-height: 1;
-    color: var(--text);
-  }
-  .kpi-change {
-    font-family: 'Space Mono', monospace; font-size: 11px; margin-top: 8px;
-  }
-  .kpi-change.up   { color: var(--green); }
-  .kpi-change.down { color: var(--red); }
-  .kpi-spark { position: absolute; bottom: 0; right: 0; opacity: .25; }
+.row-2  { display:grid; grid-template-columns:3fr 2fr; gap:16px; }
+.row-3  { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+.row-2b { display:grid; grid-template-columns:2fr 1fr; gap:16px; }
 
-  /* ── CHARTS GRID ── */
-  .charts-top { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
-  .charts-mid  { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
-  .charts-bot  { display: grid; grid-template-columns: 3fr 2fr; gap: 20px; }
+.panel { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:18px 20px; overflow:hidden; }
+.panel-head { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; }
+.panel-title { font-weight:600; font-size:13px; }
+.panel-sub { font-family:'DM Mono',monospace; font-size:9px; color:var(--muted2); letter-spacing:1px; margin-top:3px; }
+.tag { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:1px; padding:3px 8px; border-radius:20px; background:var(--green-dim); color:var(--green); border:1px solid rgba(30,215,96,0.2); }
+.chart-wrap { position:relative; width:100%; }
 
-  .panel {
-    background: var(--card-bg); border: 1px solid var(--border);
-    border-radius: 12px; padding: 20px 22px;
-  }
-  .panel-header {
-    display: flex; justify-content: space-between; align-items: flex-start;
-    margin-bottom: 18px;
-  }
-  .panel-title {
-    font-size: 13px; font-weight: 700; letter-spacing: 0.3px;
-  }
-  .panel-sub {
-    font-family: 'Space Mono', monospace; font-size: 9px;
-    color: var(--muted); letter-spacing: 1px; margin-top: 3px;
-  }
-  .panel-badge {
-    font-family: 'Space Mono', monospace; font-size: 9px;
-    background: rgba(29,185,84,.12); color: var(--green);
-    border: 1px solid rgba(29,185,84,.3);
-    padding: 3px 8px; border-radius: 20px; letter-spacing: 1px;
-  }
-  canvas { display: block; }
+.hm-grid { display:grid; grid-template-columns:44px repeat(8,1fr); gap:3px; font-family:'DM Mono',monospace; font-size:9px; }
+.hm-head { color:var(--muted); text-align:center; padding:2px 0; }
+.hm-row-label { color:var(--muted); display:flex; align-items:center; font-size:9px; }
+.hm-cell { border-radius:4px; height:26px; display:flex; align-items:center; justify-content:center; font-size:9px; cursor:default; transition:transform .12s; }
+.hm-cell:hover { transform:scale(1.1); z-index:2; position:relative; }
 
-  /* ── RETENTION HEATMAP ── */
-  .heatmap-grid {
-    display: grid; grid-template-columns: 60px repeat(8, 1fr);
-    gap: 3px; font-family: 'Space Mono', monospace; font-size: 9px;
-  }
-  .hm-header { color: var(--muted); text-align: center; padding: 3px 0; }
-  .hm-label  { color: var(--muted); display: flex; align-items: center; }
-  .hm-cell {
-    border-radius: 4px; height: 28px; display: flex;
-    align-items: center; justify-content: center;
-    font-size: 9px; font-family: 'Space Mono', monospace;
-    transition: transform .15s;
-    cursor: default;
-  }
-  .hm-cell:hover { transform: scale(1.15); z-index: 2; }
+.funnel { display:flex; flex-direction:column; gap:10px; }
+.f-row { display:flex; align-items:center; gap:10px; }
+.f-label { font-family:'DM Mono',monospace; font-size:9px; color:var(--muted2); width:90px; flex-shrink:0; }
+.f-track { flex:1; height:28px; background:rgba(255,255,255,0.04); border-radius:5px; overflow:hidden; }
+.f-bar { height:100%; border-radius:5px; display:flex; align-items:center; padding-left:10px; font-family:'DM Mono',monospace; font-size:10px; font-weight:500; }
+.f-pct { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted2); width:36px; text-align:right; flex-shrink:0; }
 
-  /* ── TOP TRACKS TABLE ── */
-  .track-table { width: 100%; border-collapse: collapse; }
-  .track-table th {
-    font-family: 'Space Mono', monospace; font-size: 9px; letter-spacing: 1.5px;
-    color: var(--muted); text-transform: uppercase; text-align: left;
-    padding: 6px 8px; border-bottom: 1px solid var(--border);
-  }
-  .track-table td { padding: 9px 8px; font-size: 12px; border-bottom: 1px solid rgba(26,37,53,.5); }
-  .track-table tr:hover td { background: rgba(29,185,84,.04); }
-  .bar-cell { position: relative; }
-  .bar-bg {
-    height: 6px; background: var(--border); border-radius: 3px;
-    overflow: hidden; margin-top: 4px;
-  }
-  .bar-fill { height: 100%; border-radius: 3px; }
-  .rank { font-family: 'Space Mono', monospace; color: var(--muted); font-size: 11px; }
-  .badge {
-    font-size: 9px; font-family: 'Space Mono', monospace;
-    padding: 2px 6px; border-radius: 3px; font-weight: 700;
-  }
+.src-list { display:flex; flex-direction:column; gap:10px; }
+.src-row { display:flex; flex-direction:column; gap:4px; }
+.src-info { display:flex; justify-content:space-between; }
+.src-name { font-size:12px; }
+.src-pct { font-family:'DM Mono',monospace; font-size:11px; color:var(--muted2); }
+.src-track { height:6px; background:rgba(255,255,255,0.06); border-radius:3px; overflow:hidden; }
+.src-fill { height:100%; border-radius:3px; }
 
-  /* ── FUNNEL ── */
-  .funnel { display: flex; flex-direction: column; gap: 10px; padding-top: 4px; }
-  .funnel-stage {
-    display: flex; align-items: center; gap: 12px;
-  }
-  .funnel-label { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--muted); width: 100px; flex-shrink: 0; }
-  .funnel-bar-wrap { flex: 1; height: 30px; background: var(--border); border-radius: 6px; overflow: hidden; position: relative; }
-  .funnel-bar { height: 100%; border-radius: 6px; display: flex; align-items: center; padding-left: 12px;
-    font-size: 12px; font-weight: 700; transition: width .8s ease; }
-  .funnel-pct { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--muted); width: 38px; text-align: right; }
+.tbl { width:100%; border-collapse:collapse; }
+.tbl th { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:1.5px; color:var(--muted); text-align:left; padding:5px 8px; border-bottom:1px solid var(--border); text-transform:uppercase; }
+.tbl td { padding:9px 8px; border-bottom:1px solid rgba(255,255,255,0.03); vertical-align:middle; }
+.tbl tr:last-child td { border-bottom:none; }
+.tbl tr:hover td { background:rgba(255,255,255,0.02); }
+.t-name { font-size:12px; font-weight:500; }
+.t-artist { font-family:'DM Mono',monospace; font-size:9px; color:var(--muted2); margin-top:2px; }
+.t-rank { font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); }
+.mini-bar-wrap { height:4px; background:rgba(255,255,255,0.06); border-radius:2px; margin-top:5px; }
+.mini-bar { height:100%; border-radius:2px; }
+.badge { font-family:'DM Mono',monospace; font-size:9px; font-weight:500; padding:2px 7px; border-radius:4px; }
 
-  /* ── FOOTER ── */
-  footer {
-    padding: 16px 32px;
-    border-top: 1px solid var(--border);
-    display: flex; justify-content: space-between; align-items: center;
-    font-family: 'Space Mono', monospace; font-size: 9px; color: var(--muted);
-  }
+footer { padding:14px 28px; border-top:1px solid var(--border); display:flex; justify-content:space-between; font-family:'DM Mono',monospace; font-size:9px; color:var(--muted); letter-spacing:1px; }
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <header>
   <div class="logo">
-    <div class="logo-icon">
+    <div class="logo-mark">
       <svg viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
     </div>
     <div>
-      <div class="logo-text">UK RAP ANALYTICS</div>
+      <div class="logo-title">UK Rap Analytics</div>
       <div class="logo-sub">SPOTIFY · BI DASHBOARD · 2024</div>
     </div>
   </div>
-  <div class="header-meta">
-    <div><span class="live-dot"></span>LIVE DATA</div>
-    <div style="margin-top:4px;">Last sync: 2 min ago</div>
+  <div class="header-right">
+    <div class="live"><span class="live-dot"></span>LIVE DATA</div>
+    <div>Last sync: 2 min ago</div>
   </div>
 </header>
 
-<!-- FILTERS -->
 <div class="filters">
   <div class="filter-group">
-    <label>Период</label>
-    <div class="btn-group" id="period-btns">
+    <div class="filter-label">ПЕРИОД</div>
+    <div class="seg" id="seg">
       <button onclick="setPeriod('7d',this)">7D</button>
-      <button onclick="setPeriod('30d',this)" class="active">30D</button>
+      <button onclick="setPeriod('30d',this)" class="on">30D</button>
       <button onclick="setPeriod('90d',this)">90D</button>
       <button onclick="setPeriod('1y',this)">1Y</button>
     </div>
   </div>
   <div class="filter-group">
-    <label>Артист</label>
-    <select id="artist-filter" onchange="applyFilters()">
+    <div class="filter-label">АРТИСТ</div>
+    <select id="f-artist">
       <option value="all">Все артисты</option>
-      <option value="stormzy">Stormzy</option>
-      <option value="dave">Dave</option>
-      <option value="central-cee">Central Cee</option>
-      <option value="little-simz">Little Simz</option>
-      <option value="aitch">Aitch</option>
-      <option value="slowthai">slowthai</option>
+      <option>Stormzy</option><option>Dave</option>
+      <option>Central Cee</option><option>Little Simz</option>
+      <option>Aitch</option><option>slowthai</option>
     </select>
   </div>
   <div class="filter-group">
-    <label>Источник</label>
-    <select id="source-filter" onchange="applyFilters()">
+    <div class="filter-label">ИСТОЧНИК</div>
+    <select id="f-source">
       <option value="all">Все источники</option>
-      <option value="playlist">Playlist</option>
-      <option value="radio">Radio</option>
-      <option value="search">Search</option>
-      <option value="album">Album</option>
+      <option>Playlist</option><option>Radio</option>
+      <option>Search</option><option>Album</option>
     </select>
   </div>
   <div class="filter-group">
-    <label>Устройство</label>
-    <select id="device-filter" onchange="applyFilters()">
+    <div class="filter-label">УСТРОЙСТВО</div>
+    <select id="f-device">
       <option value="all">Все устройства</option>
-      <option value="mobile">Mobile</option>
-      <option value="desktop">Desktop</option>
-      <option value="smart_speaker">Smart Speaker</option>
+      <option>Mobile</option><option>Desktop</option><option>Smart Speaker</option>
     </select>
   </div>
-  <button class="filter-reset" onclick="resetFilters()">↺ СБРОСИТЬ</button>
+  <button class="reset-btn" onclick="resetAll()">↺ СБРОС</button>
 </div>
 
-<!-- MAIN -->
-<div class="main">
-
-  <!-- KPI ROW -->
+<div class="page">
   <div class="kpi-row">
-    <div class="kpi-card" style="--accent:var(--green)">
-      <div class="kpi-label">DAU (сред.)</div>
-      <div class="kpi-val" id="kpi-dau">247K</div>
-      <div class="kpi-change up" id="kpi-dau-ch">▲ +12.4%</div>
+    <div class="kpi" style="--c:var(--green)">
+      <div class="kpi-label">DAU (СРЕД.)</div>
+      <div class="kpi-val" id="v-dau">247K</div>
+      <div class="kpi-delta up" id="d-dau">▲ +12.4%</div>
     </div>
-    <div class="kpi-card" style="--accent:var(--cyan)">
+    <div class="kpi" style="--c:var(--cyan)">
       <div class="kpi-label">MAU</div>
-      <div class="kpi-val" id="kpi-mau">3.1M</div>
-      <div class="kpi-change up" id="kpi-mau-ch">▲ +8.7%</div>
+      <div class="kpi-val" id="v-mau">3.1M</div>
+      <div class="kpi-delta up">▲ +8.7%</div>
     </div>
-    <div class="kpi-card" style="--accent:var(--yellow)">
-      <div class="kpi-label">DAU/MAU</div>
-      <div class="kpi-val" id="kpi-ratio">7.9%</div>
-      <div class="kpi-change up" id="kpi-ratio-ch">▲ +0.3pp</div>
+    <div class="kpi" style="--c:var(--yellow)">
+      <div class="kpi-label">DAU / MAU</div>
+      <div class="kpi-val" id="v-ratio">7.9%</div>
+      <div class="kpi-delta up">▲ +0.3pp</div>
     </div>
-    <div class="kpi-card" style="--accent:var(--purple)">
-      <div class="kpi-label">7d Retention</div>
-      <div class="kpi-val" id="kpi-ret">38%</div>
-      <div class="kpi-change down" id="kpi-ret-ch">▼ −2.1pp</div>
+    <div class="kpi" style="--c:var(--purple)">
+      <div class="kpi-label">7D RETENTION</div>
+      <div class="kpi-val" id="v-ret">38%</div>
+      <div class="kpi-delta down">▼ −2.1pp</div>
     </div>
-    <div class="kpi-card" style="--accent:var(--red)">
-      <div class="kpi-label">Conversion</div>
-      <div class="kpi-val" id="kpi-conv">6.2%</div>
-      <div class="kpi-change up" id="kpi-conv-ch">▲ +0.8pp</div>
-    </div>
-  </div>
-
-  <!-- ROW 1 -->
-  <div class="charts-top">
-    <!-- DAU/MAU Timeline -->
-    <div class="panel">
-      <div class="panel-header">
-        <div>
-          <div class="panel-title">DAU / MAU Динамика</div>
-          <div class="panel-sub">DAILY & MONTHLY ACTIVE USERS</div>
-        </div>
-        <div class="panel-badge">TREND</div>
-      </div>
-      <canvas id="dau-chart" height="180"></canvas>
-    </div>
-    <!-- Artist Share -->
-    <div class="panel">
-      <div class="panel-header">
-        <div>
-          <div class="panel-title">Доля слушателей</div>
-          <div class="panel-sub">BY ARTIST</div>
-        </div>
-      </div>
-      <canvas id="artist-chart" height="180"></canvas>
+    <div class="kpi" style="--c:var(--red)">
+      <div class="kpi-label">CONVERSION</div>
+      <div class="kpi-val" id="v-conv">6.2%</div>
+      <div class="kpi-delta up">▲ +0.8pp</div>
     </div>
   </div>
 
-  <!-- ROW 2 -->
-  <div class="charts-mid">
-    <!-- Retention Heatmap -->
+  <div class="row-2">
     <div class="panel">
-      <div class="panel-header">
-        <div>
-          <div class="panel-title">Retention Heatmap</div>
-          <div class="panel-sub">КОГОРТНЫЙ АНАЛИЗ · 8 НЕДЕЛЬ</div>
-        </div>
+      <div class="panel-head">
+        <div><div class="panel-title">DAU / MAU Динамика</div><div class="panel-sub">DAILY & MONTHLY ACTIVE USERS</div></div>
+        <span class="tag">TREND</span>
+      </div>
+      <div class="chart-wrap" style="height:200px"><canvas id="c-dau"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <div><div class="panel-title">Доля слушателей</div><div class="panel-sub">BY ARTIST</div></div>
+      </div>
+      <div class="chart-wrap" style="height:200px"><canvas id="c-donut"></canvas></div>
+    </div>
+  </div>
+
+  <div class="row-3">
+    <div class="panel">
+      <div class="panel-head">
+        <div><div class="panel-title">Retention Heatmap</div><div class="panel-sub">КОГОРТНЫЙ АНАЛИЗ</div></div>
       </div>
       <div id="heatmap"></div>
     </div>
-    <!-- Source Breakdown -->
     <div class="panel">
-      <div class="panel-header">
-        <div>
-          <div class="panel-title">Источники трафика</div>
-          <div class="panel-sub">STREAM SOURCES</div>
-        </div>
+      <div class="panel-head">
+        <div><div class="panel-title">Источники трафика</div><div class="panel-sub">STREAM SOURCES</div></div>
       </div>
-      <canvas id="source-chart" height="200"></canvas>
+      <div class="src-list" id="sources"></div>
     </div>
-    <!-- Conversion Funnel -->
     <div class="panel">
-      <div class="panel-header">
-        <div>
-          <div class="panel-title">Conversion Funnel</div>
-          <div class="panel-sub">FREE → PREMIUM</div>
-        </div>
+      <div class="panel-head">
+        <div><div class="panel-title">Conversion Funnel</div><div class="panel-sub">FREE → PREMIUM</div></div>
       </div>
       <div class="funnel" id="funnel"></div>
     </div>
   </div>
 
-  <!-- ROW 3 -->
-  <div class="charts-bot">
-    <!-- Top Tracks Table -->
+  <div class="row-2b">
     <div class="panel">
-      <div class="panel-header">
-        <div>
-          <div class="panel-title">Топ треков</div>
-          <div class="panel-sub">BY STREAMS & COMPLETION RATE</div>
-        </div>
-        <div class="panel-badge">TOP 8</div>
+      <div class="panel-head">
+        <div><div class="panel-title">Топ треков</div><div class="panel-sub">BY STREAMS & COMPLETION</div></div>
+        <span class="tag">TOP 8</span>
       </div>
-      <table class="track-table" id="tracks-table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Трек / Артист</th>
-            <th>Streams</th>
-            <th>Completion</th>
-            <th>Energy</th>
-          </tr>
-        </thead>
-        <tbody id="tracks-body"></tbody>
+      <table class="tbl">
+        <thead><tr><th>#</th><th>Трек / Артист</th><th>Streams</th><th>Completion</th><th>Energy</th></tr></thead>
+        <tbody id="tbl-body"></tbody>
       </table>
     </div>
-    <!-- Listening Hours by Device -->
     <div class="panel">
-      <div class="panel-header">
-        <div>
-          <div class="panel-title">Часы прослушивания</div>
-          <div class="panel-sub">BY DEVICE · WEEKLY</div>
-        </div>
+      <div class="panel-head">
+        <div><div class="panel-title">Устройства</div><div class="panel-sub">WEEKLY LISTENING %</div></div>
       </div>
-      <canvas id="device-chart" height="240"></canvas>
+      <div class="chart-wrap" style="height:260px"><canvas id="c-device"></canvas></div>
     </div>
   </div>
-
 </div>
 
 <footer>
-  <span>MART: artist_dau_mau · user_retention · conversion_funnel · top_tracks</span>
-  <span>ETL: PostgreSQL → DW → Mart · Refresh: 15 min</span>
-  <span>© 2024 UK RAP BI · УЧЕБНЫЙ ПРОЕКТ</span>
+  <span>mart: artist_dau_mau · user_retention · conversion_funnel · top_tracks</span>
+  <span>ETL: PostgreSQL → DW → Mart · refresh 15min</span>
+  <span>github.com/lizagrishuk/spotify-uk-rap-bi</span>
 </footer>
 
 <script>
-/* ═══════════════════════════════════════════════════════
-   DATA SIMULATION
-═══════════════════════════════════════════════════════ */
-const COLORS = {
-  green:  '#1db954', cyan: '#00d4ff', yellow: '#ffd60a',
-  red:    '#ff3b5c', purple: '#b04aff',
-  muted:  '#1a2535', text: '#e8edf4'
-};
-
-const ARTISTS = [
-  { name: 'Stormzy',     color: '#1db954', share: 28 },
-  { name: 'Dave',        color: '#00d4ff', share: 22 },
-  { name: 'Central Cee', color: '#ffd60a', share: 19 },
-  { name: 'Little Simz', color: '#b04aff', share: 15 },
-  { name: 'Aitch',       color: '#ff3b5c', share: 10 },
-  { name: 'slowthai',    color: '#ff6b35', share: 6  },
-];
-
-const TRACKS = [
-  { rank:1, name:'Hide & Seek',    artist:'Stormzy',     streams:4.2, completion:81, energy:0.87, col:'#1db954' },
-  { rank:2, name:'Titanium',       artist:'Dave',        streams:3.9, completion:78, energy:0.74, col:'#00d4ff' },
-  { rank:3, name:'Loading',        artist:'Central Cee', streams:3.5, completion:85, energy:0.91, col:'#ffd60a' },
-  { rank:4, name:'Gorilla',        artist:'Little Simz', streams:2.8, completion:72, energy:0.82, col:'#b04aff' },
-  { rank:5, name:'My G',           artist:'Aitch',       streams:2.3, completion:69, energy:0.76, col:'#ff3b5c' },
-  { rank:6, name:'Feel Away',      artist:'slowthai',    streams:1.9, completion:65, energy:0.88, col:'#ff6b35' },
-  { rank:7, name:'Vossi Bop',      artist:'Stormzy',     streams:1.7, completion:77, energy:0.79, col:'#1db954' },
-  { rank:8, name:'Psychodrama',    artist:'Dave',        streams:1.4, completion:83, energy:0.61, col:'#00d4ff' },
-];
-
-function genDays(n, base, variance) {
-  return Array.from({length:n}, (_,i) => {
-    const trend = base + i * (variance * 0.4);
-    return Math.round(trend + (Math.random()-.5) * variance * 1.8);
-  });
-}
-
-function getLast30Labels() {
-  const labels = [];
-  for (let i = 29; i >= 0; i--) {
-    const d = new Date(); d.setDate(d.getDate() - i);
-    labels.push(d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'}));
-  }
-  return labels;
-}
-
-/* ═══════════════════════════════════════════════════════
-   CHART.JS DEFAULTS
-═══════════════════════════════════════════════════════ */
-Chart.defaults.color = '#5a6a80';
-Chart.defaults.font.family = "'Space Mono', monospace";
+// disable all chart animations globally
+Chart.defaults.animation = false;
+Chart.defaults.color = '#4a5568';
+Chart.defaults.font.family = "'DM Mono', monospace";
 Chart.defaults.font.size = 10;
 
-const gridOpts = {
-  color: 'rgba(26,37,53,0.8)',
-  drawBorder: false
-};
+const G = { green:'#1ed760', cyan:'#29d4e0', yellow:'#f5c518', red:'#e8445a', purple:'#a855f7' };
+const gridColor = 'rgba(255,255,255,0.04)';
 
-/* ═══════════════════════════════════════════════════════
-   DAU / MAU CHART
-═══════════════════════════════════════════════════════ */
+// ── stable random with seed ──
+function seededRand(seed) {
+  let s = seed;
+  return () => { s = (s * 16807 + 0) % 2147483647; return (s - 1) / 2147483646; };
+}
+function smoothLine(n, base, amp, seed=42) {
+  const rand = seededRand(seed);
+  const arr = []; let v = base;
+  for (let i = 0; i < n; i++) {
+    v += (rand() - 0.48) * amp;
+    v = Math.max(base * 0.75, Math.min(base * 1.25, v));
+    arr.push(Math.round(v));
+  }
+  return arr;
+}
+function dateLabels(n) {
+  const out = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    out.push(d.toLocaleDateString('ru-RU', { day:'2-digit', month:'2-digit' }));
+  }
+  return out;
+}
+
+// ── DAU Chart ──
 let dauChart;
-function buildDAUChart(n=30) {
-  const labels = getLast30Labels().slice(-n);
-  const dau = genDays(n, 220000, 40000);
-  const mauLine = Array.from({length:n}, (_,i) => Math.round(3100000 + i * 8000 + (Math.random()-.5)*50000));
-
+function buildDAU(n=30) {
   if (dauChart) dauChart.destroy();
-  const ctx = document.getElementById('dau-chart').getContext('2d');
-  const grad = ctx.createLinearGradient(0,0,0,180);
-  grad.addColorStop(0, 'rgba(29,185,84,.35)');
-  grad.addColorStop(1, 'rgba(29,185,84,.02)');
-
+  const labels = dateLabels(n);
+  const dau    = smoothLine(n, 247000, 15000, 7);
+  const mau10  = smoothLine(n, 310000,  6000, 13);
+  const ctx = document.getElementById('c-dau').getContext('2d');
+  const grad = ctx.createLinearGradient(0, 0, 0, 200);
+  grad.addColorStop(0, 'rgba(30,215,96,0.22)');
+  grad.addColorStop(1, 'rgba(30,215,96,0)');
   dauChart = new Chart(ctx, {
     type: 'line',
     data: {
       labels,
       datasets: [
-        {
-          label: 'DAU',
-          data: dau,
-          borderColor: COLORS.green,
-          backgroundColor: grad,
-          borderWidth: 2, pointRadius: 0,
-          fill: true, tension: 0.4, yAxisID: 'y'
-        },
-        {
-          label: 'MAU/10',
-          data: mauLine.map(v => Math.round(v/10)),
-          borderColor: COLORS.cyan,
-          backgroundColor: 'transparent',
-          borderWidth: 1.5, borderDash: [4,3],
-          pointRadius: 0, tension: 0.4, yAxisID: 'y'
-        }
+        { label:'DAU', data:dau, borderColor:G.green, backgroundColor:grad, borderWidth:2, pointRadius:0, fill:true, tension:0.4 },
+        { label:'MAU/10', data:mau10, borderColor:G.cyan, backgroundColor:'transparent', borderWidth:1.5, borderDash:[4,3], pointRadius:0, tension:0.4 }
       ]
     },
     options: {
-      responsive: true, maintainAspectRatio: false,
-      animation: { duration: 600 },
+      responsive:true, maintainAspectRatio:false,
       plugins: {
-        legend: { labels: { boxWidth: 12, padding: 16 } },
-        tooltip: {
-          backgroundColor: '#0d1219',
-          borderColor: '#1a2535', borderWidth: 1,
-          titleFont: {size:10}, bodyFont: {size:10},
-          callbacks: {
-            label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()}`
-          }
-        }
+        legend: { labels:{ boxWidth:10, padding:14 } },
+        tooltip: { backgroundColor:'#141c27', borderColor:'rgba(255,255,255,0.08)', borderWidth:1,
+          callbacks:{ label: c => ` ${c.dataset.label}: ${c.parsed.y.toLocaleString()}` } }
       },
       scales: {
-        x: { grid: gridOpts, ticks: { maxTicksLimit: 8 } },
-        y: { grid: gridOpts, ticks: {
-          callback: v => v >= 1000 ? (v/1000).toFixed(0)+'K' : v
-        }}
+        x: { grid:{ color:gridColor }, ticks:{ maxTicksLimit:7 } },
+        y: { grid:{ color:gridColor }, ticks:{ callback: v => v>=1000?(v/1000).toFixed(0)+'K':v } }
       }
     }
   });
 }
 
-/* ═══════════════════════════════════════════════════════
-   ARTIST DONUT
-═══════════════════════════════════════════════════════ */
-function buildArtistChart() {
-  const ctx = document.getElementById('artist-chart').getContext('2d');
+// ── Donut ──
+function buildDonut() {
+  const ctx = document.getElementById('c-donut').getContext('2d');
   new Chart(ctx, {
-    type: 'doughnut',
+    type:'doughnut',
     data: {
-      labels: ARTISTS.map(a=>a.name),
-      datasets: [{
-        data: ARTISTS.map(a=>a.share),
-        backgroundColor: ARTISTS.map(a=>a.color),
-        borderColor: '#111822', borderWidth: 3,
-        hoverBorderWidth: 1
-      }]
+      labels:['Stormzy','Dave','Central Cee','Little Simz','Aitch','slowthai'],
+      datasets:[{ data:[28,22,19,15,10,6], backgroundColor:[G.green,G.cyan,G.yellow,G.purple,G.red,'#ff914d'], borderColor:'#141c27', borderWidth:3 }]
     },
     options: {
-      responsive: true, maintainAspectRatio: false,
-      cutout: '68%',
+      responsive:true, maintainAspectRatio:false, cutout:'65%',
       plugins: {
-        legend: {
-          position: 'bottom',
-          labels: { boxWidth: 10, padding: 10, font:{size:10} }
-        },
-        tooltip: {
-          callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed}%` }
-        }
+        legend:{ position:'bottom', labels:{ boxWidth:10, padding:10, font:{size:10} } },
+        tooltip:{ callbacks:{ label: c => ` ${c.label}: ${c.parsed}%` } }
       }
     }
   });
 }
 
-/* ═══════════════════════════════════════════════════════
-   SOURCE BAR
-═══════════════════════════════════════════════════════ */
-function buildSourceChart() {
-  const ctx = document.getElementById('source-chart').getContext('2d');
+// ── Device Chart ──
+function buildDevice() {
+  const ctx = document.getElementById('c-device').getContext('2d');
   new Chart(ctx, {
-    type: 'bar',
+    type:'bar',
     data: {
-      labels: ['Playlist','Radio','Search','Album','Artist Page'],
-      datasets: [{
-        label: 'Streams',
-        data: [42, 23, 18, 12, 5],
-        backgroundColor: [COLORS.green, COLORS.cyan, COLORS.yellow, COLORS.purple, COLORS.red],
-        borderRadius: 5, borderSkipped: false
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      indexAxis: 'y',
-      plugins: { legend: {display:false} },
-      scales: {
-        x: { grid: gridOpts, ticks: { callback: v => v+'%' } },
-        y: { grid: {display:false} }
-      }
-    }
-  });
-}
-
-/* ═══════════════════════════════════════════════════════
-   DEVICE STACKED BAR
-═══════════════════════════════════════════════════════ */
-function buildDeviceChart() {
-  const ctx = document.getElementById('device-chart').getContext('2d');
-  const weeks = ['Нед 1','Нед 2','Нед 3','Нед 4'];
-  new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: weeks,
-      datasets: [
-        { label:'Mobile',       data:[62,65,61,68], backgroundColor: COLORS.green,  borderRadius:4 },
-        { label:'Desktop',      data:[22,20,24,19], backgroundColor: COLORS.cyan,   borderRadius:4 },
-        { label:'Smart Speaker',data:[16,15,15,13], backgroundColor: COLORS.purple, borderRadius:4 }
+      labels:['Нед 1','Нед 2','Нед 3','Нед 4'],
+      datasets:[
+        { label:'Mobile',        data:[62,65,61,68], backgroundColor:G.green,  borderRadius:3 },
+        { label:'Desktop',       data:[22,20,24,19], backgroundColor:G.cyan,   borderRadius:3 },
+        { label:'Smart Speaker', data:[16,15,15,13], backgroundColor:G.purple, borderRadius:3 },
       ]
     },
     options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { labels:{boxWidth:10,padding:12} } },
-      scales: {
-        x: { stacked:true, grid:{display:false} },
-        y: { stacked:true, grid: gridOpts, ticks:{callback:v=>v+'%'} }
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ labels:{ boxWidth:10, padding:12 } } },
+      scales:{
+        x:{ stacked:true, grid:{ display:false } },
+        y:{ stacked:true, grid:{ color:gridColor }, ticks:{ callback: v => v+'%' } }
       }
     }
   });
 }
 
-/* ═══════════════════════════════════════════════════════
-   RETENTION HEATMAP
-═══════════════════════════════════════════════════════ */
+// ── Heatmap ──
 function buildHeatmap() {
   const cohorts = ['Янв','Фев','Мар','Апр','Май','Июн'];
-  const days = ['D0','D1','D3','D7','D14','D21','D28','D30'];
-
-  const base = [
-    [100, 55, 44, 38, 28, 22, 18, 16],
-    [100, 58, 46, 40, 30, 25, 20, 17],
-    [100, 61, 49, 42, 33, 27, 22, 19],
-    [100, 57, 45, 39, 31, 24, 19, 16],
-    [100, 63, 51, 44, 35, 29, 24, 21],
-    [100, 60, 48, 41, 32, 26, 21, 18],
-  ];
-
-  const container = document.getElementById('heatmap');
-  container.innerHTML = '';
-  const grid = document.createElement('div');
-  grid.className = 'heatmap-grid';
-
-  // header
-  grid.innerHTML += '<div class="hm-header"></div>';
-  days.forEach(d => grid.innerHTML += `<div class="hm-header">${d}</div>`);
-
-  base.forEach((row, ri) => {
-    grid.innerHTML += `<div class="hm-label">${cohorts[ri]}</div>`;
+  const cols    = ['D0','D1','D3','D7','D14','D21','D28','D30'];
+  const data = [[100,55,44,38,28,22,18,16],[100,58,46,40,30,25,20,17],[100,61,49,42,33,27,22,19],[100,57,45,39,31,24,19,16],[100,63,51,44,35,29,24,21],[100,60,48,41,32,26,21,18]];
+  const el = document.getElementById('heatmap');
+  const g  = document.createElement('div');
+  g.className = 'hm-grid';
+  g.innerHTML = `<div></div>` + cols.map(c=>`<div class="hm-head">${c}</div>`).join('');
+  data.forEach((row,ri) => {
+    g.innerHTML += `<div class="hm-row-label">${cohorts[ri]}</div>`;
     row.forEach(v => {
-      const alpha = v / 100;
-      const bg = `rgba(29,185,84,${alpha * 0.85})`;
-      const color = alpha > 0.5 ? '#000' : '#e8edf4';
-      grid.innerHTML += `<div class="hm-cell" style="background:${bg};color:${color}" title="${v}%">${v}%</div>`;
+      const a = (v/100)*0.9;
+      g.innerHTML += `<div class="hm-cell" style="background:rgba(30,215,96,${a});color:${a>0.5?'#000':'#e2e8f0'}" title="${v}%">${v}%</div>`;
     });
   });
-
-  container.appendChild(grid);
+  el.appendChild(g);
 }
 
-/* ═══════════════════════════════════════════════════════
-   CONVERSION FUNNEL
-═══════════════════════════════════════════════════════ */
+// ── Sources ──
+function buildSources() {
+  const items = [
+    {name:'Playlist',   pct:42, color:G.green },
+    {name:'Radio',      pct:23, color:G.cyan  },
+    {name:'Search',     pct:18, color:G.yellow},
+    {name:'Album',      pct:12, color:G.purple},
+    {name:'Artist Page',pct: 5, color:G.red   },
+  ];
+  document.getElementById('sources').innerHTML = items.map(s=>`
+    <div class="src-row">
+      <div class="src-info"><span class="src-name">${s.name}</span><span class="src-pct">${s.pct}%</span></div>
+      <div class="src-track"><div class="src-fill" style="width:${s.pct}%;background:${s.color}"></div></div>
+    </div>`).join('');
+}
+
+// ── Funnel ──
 function buildFunnel() {
   const stages = [
-    { label: 'Free Users',    val: 100, pct: '100%',  color: COLORS.cyan   },
-    { label: 'Trial Start',   val: 24,  pct: '24.0%', color: COLORS.yellow },
-    { label: 'Premium',       val: 14,  pct: '14.0%', color: COLORS.green  },
-    { label: 'Retained 30d',  val: 9,   pct: '9.0%',  color: COLORS.purple },
+    {label:'Free Users',  val:100, pct:'100%', color:G.cyan  },
+    {label:'Trial Start', val: 24, pct: '24%', color:G.yellow},
+    {label:'Premium',     val: 14, pct: '14%', color:G.green },
+    {label:'Retained 30d',val:  9, pct:  '9%', color:G.purple},
   ];
-  const el = document.getElementById('funnel');
-  el.innerHTML = stages.map(s => `
-    <div class="funnel-stage">
-      <div class="funnel-label">${s.label}</div>
-      <div class="funnel-bar-wrap">
-        <div class="funnel-bar" style="width:${s.val}%;background:${s.color}20;border:1px solid ${s.color}40">
-          <span style="color:${s.color};font-family:'Space Mono',monospace;font-size:11px;font-weight:700">${s.val.toLocaleString()}K</span>
+  document.getElementById('funnel').innerHTML = stages.map(s=>`
+    <div class="f-row">
+      <div class="f-label">${s.label}</div>
+      <div class="f-track">
+        <div class="f-bar" style="width:${s.val}%;background:${s.color}22;border-left:3px solid ${s.color}">
+          <span style="color:${s.color}">${s.val}K</span>
         </div>
       </div>
-      <div class="funnel-pct">${s.pct}</div>
-    </div>
-  `).join('');
+      <div class="f-pct">${s.pct}</div>
+    </div>`).join('');
 }
 
-/* ═══════════════════════════════════════════════════════
-   TOP TRACKS TABLE
-═══════════════════════════════════════════════════════ */
-function buildTracksTable() {
-  const tbody = document.getElementById('tracks-body');
-  const maxS = Math.max(...TRACKS.map(t=>t.streams));
-  tbody.innerHTML = TRACKS.map(t => {
-    const barW = (t.streams / maxS * 100).toFixed(1);
-    const energyColor = t.energy > 0.8 ? COLORS.red : t.energy > 0.65 ? COLORS.yellow : COLORS.cyan;
-    return `
-      <tr>
-        <td class="rank">${t.rank}</td>
-        <td>
-          <div style="font-size:12px;font-weight:700">${t.name}</div>
-          <div style="font-size:10px;color:var(--muted);font-family:'Space Mono',monospace;margin-top:2px">${t.artist}</div>
-        </td>
-        <td class="bar-cell">
-          <span style="font-weight:700;font-size:12px">${t.streams}M</span>
-          <div class="bar-bg"><div class="bar-fill" style="width:${barW}%;background:${t.col}"></div></div>
-        </td>
-        <td>
-          <span class="badge" style="background:${t.completion>78?'rgba(29,185,84,.15)':'rgba(255,59,92,.12)'};
-            color:${t.completion>78?COLORS.green:COLORS.red};
-            border:1px solid ${t.completion>78?'rgba(29,185,84,.3)':'rgba(255,59,92,.3)'}">${t.completion}%</span>
-        </td>
-        <td>
-          <span style="font-family:'Space Mono',monospace;font-size:11px;color:${energyColor}">${t.energy.toFixed(2)}</span>
-        </td>
-      </tr>`;
+// ── Table ──
+const TRACKS = [
+  {r:1,name:'Hide & Seek', artist:'Stormzy',    s:4.2,cmp:81,e:0.87,c:G.green },
+  {r:2,name:'Titanium',    artist:'Dave',        s:3.9,cmp:78,e:0.74,c:G.cyan  },
+  {r:3,name:'Loading',     artist:'Central Cee',s:3.5,cmp:85,e:0.91,c:G.yellow},
+  {r:4,name:'Gorilla',     artist:'Little Simz',s:2.8,cmp:72,e:0.82,c:G.purple},
+  {r:5,name:'My G',        artist:'Aitch',       s:2.3,cmp:69,e:0.76,c:G.red   },
+  {r:6,name:'Feel Away',   artist:'slowthai',    s:1.9,cmp:65,e:0.88,c:'#ff914d'},
+  {r:7,name:'Vossi Bop',   artist:'Stormzy',     s:1.7,cmp:77,e:0.79,c:G.green },
+  {r:8,name:'Psychodrama', artist:'Dave',        s:1.4,cmp:83,e:0.61,c:G.cyan  },
+];
+function buildTable() {
+  const mx = Math.max(...TRACKS.map(t=>t.s));
+  document.getElementById('tbl-body').innerHTML = TRACKS.map(t => {
+    const good = t.cmp >= 75;
+    const ec = t.e > 0.8 ? G.red : t.e > 0.65 ? G.yellow : G.cyan;
+    return `<tr>
+      <td class="t-rank">${t.r}</td>
+      <td><div class="t-name">${t.name}</div><div class="t-artist">${t.artist}</div></td>
+      <td>
+        <span style="font-size:12px;font-weight:500">${t.s}M</span>
+        <div class="mini-bar-wrap"><div class="mini-bar" style="width:${(t.s/mx*100).toFixed(0)}%;background:${t.c}"></div></div>
+      </td>
+      <td><span class="badge" style="background:${good?'rgba(30,215,96,0.12)':'rgba(232,68,90,0.12)'};color:${good?G.green:G.red}">${t.cmp}%</span></td>
+      <td style="font-family:'DM Mono',monospace;font-size:10px;color:${ec}">${t.e.toFixed(2)}</td>
+    </tr>`;
   }).join('');
 }
 
-/* ═══════════════════════════════════════════════════════
-   FILTERS
-═══════════════════════════════════════════════════════ */
+// ── Filters ──
+const KPI = {
+  '7d': {dau:'231K',mau:'2.9M',ratio:'7.5%',ret:'41%',conv:'5.8%'},
+  '30d':{dau:'247K',mau:'3.1M',ratio:'7.9%',ret:'38%',conv:'6.2%'},
+  '90d':{dau:'258K',mau:'3.3M',ratio:'8.1%',ret:'35%',conv:'6.7%'},
+  '1y': {dau:'271K',mau:'3.5M',ratio:'8.4%',ret:'32%',conv:'7.1%'},
+};
 function setPeriod(p, btn) {
-  document.querySelectorAll('#period-btns button').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  const n = {7:7,30:30,90:90,'1y':365}[p.replace('d','').replace('1y','1y')] || 30;
-  const days = p==='7d'?7:p==='30d'?30:p==='90d'?90:365;
-  buildDAUChart(Math.min(days, 60));
-  updateKPIs(p);
+  document.querySelectorAll('#seg button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  const k = KPI[p];
+  document.getElementById('v-dau').textContent   = k.dau;
+  document.getElementById('v-mau').textContent   = k.mau;
+  document.getElementById('v-ratio').textContent = k.ratio;
+  document.getElementById('v-ret').textContent   = k.ret;
+  document.getElementById('v-conv').textContent  = k.conv;
+  buildDAU({'7d':7,'30d':30,'90d':60,'1y':60}[p]);
+}
+function resetAll() {
+  document.getElementById('f-artist').value = 'all';
+  document.getElementById('f-source').value = 'all';
+  document.getElementById('f-device').value = 'all';
+  document.querySelectorAll('#seg button').forEach((b,i)=>b.classList.toggle('on',i===1));
+  buildDAU(30);
+  const k = KPI['30d'];
+  document.getElementById('v-dau').textContent   = k.dau;
+  document.getElementById('v-mau').textContent   = k.mau;
+  document.getElementById('v-ratio').textContent = k.ratio;
+  document.getElementById('v-ret').textContent   = k.ret;
+  document.getElementById('v-conv').textContent  = k.conv;
 }
 
-function updateKPIs(period) {
-  const multipliers = {'7d':{dau:'231K',mau:'2.9M',ratio:'7.5%',ret:'41%',conv:'5.8%'},
-                       '30d':{dau:'247K',mau:'3.1M',ratio:'7.9%',ret:'38%',conv:'6.2%'},
-                       '90d':{dau:'258K',mau:'3.3M',ratio:'8.1%',ret:'35%',conv:'6.7%'},
-                       '1y': {dau:'271K',mau:'3.5M',ratio:'8.4%',ret:'32%',conv:'7.1%'}};
-  const m = multipliers[period] || multipliers['30d'];
-  document.getElementById('kpi-dau').textContent = m.dau;
-  document.getElementById('kpi-mau').textContent = m.mau;
-  document.getElementById('kpi-ratio').textContent = m.ratio;
-  document.getElementById('kpi-ret').textContent = m.ret;
-  document.getElementById('kpi-conv').textContent = m.conv;
-}
-
-function applyFilters() {
-  // In a real system this would re-query the mart
-  buildDAUChart(30);
-}
-
-function resetFilters() {
-  document.getElementById('artist-filter').value = 'all';
-  document.getElementById('source-filter').value = 'all';
-  document.getElementById('device-filter').value = 'all';
-  document.querySelectorAll('#period-btns button').forEach((b,i)=>b.classList.toggle('active',i===1));
-  buildDAUChart(30);
-  updateKPIs('30d');
-}
-
-/* ═══════════════════════════════════════════════════════
-   INIT
-═══════════════════════════════════════════════════════ */
-document.addEventListener('DOMContentLoaded', () => {
-  buildDAUChart(30);
-  buildArtistChart();
-  buildSourceChart();
-  buildDeviceChart();
-  buildHeatmap();
-  buildFunnel();
-  buildTracksTable();
-});
+buildDAU(30); buildDonut(); buildDevice();
+buildHeatmap(); buildSources(); buildFunnel(); buildTable();
 </script>
 </body>
 </html>
