@@ -1,106 +1,115 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>UK Rap · Spotify Analytics</title>
+<title>UK Rap · Spotify BI Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-:root {
-  --bg:#0a0d12; --surface:#111720; --card:#141c27;
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0d12;--surface:#111720;--card:#141c27;
   --border:rgba(255,255,255,0.07);
-  --green:#1ed760; --green-dim:rgba(30,215,96,0.12);
-  --cyan:#29d4e0; --yellow:#f5c518; --red:#e8445a; --purple:#a855f7;
-  --text:#e2e8f0; --muted:#4a5568; --muted2:#718096;
+  --green:#1ed760;--cyan:#29d4e0;--yellow:#f5c518;--red:#e8445a;--purple:#a855f7;
+  --text:#e2e8f0;--muted:#4a5568;--muted2:#718096;
 }
-html,body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; font-size:14px; min-height:100vh; }
-
-header { display:flex; align-items:center; justify-content:space-between; padding:16px 28px; border-bottom:1px solid var(--border); background:var(--surface); }
-.logo { display:flex; align-items:center; gap:12px; }
-.logo-mark { width:36px; height:36px; border-radius:50%; background:var(--green); display:grid; place-items:center; flex-shrink:0; }
-.logo-mark svg { width:18px; height:18px; fill:#000; }
-.logo-title { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:1px; line-height:1; }
-.logo-sub { font-family:'DM Mono',monospace; font-size:9px; color:var(--muted2); letter-spacing:2px; margin-top:2px; }
-.header-right { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted2); text-align:right; }
-.live { display:flex; align-items:center; gap:6px; justify-content:flex-end; margin-bottom:2px; }
-.live-dot { width:6px; height:6px; border-radius:50%; background:var(--green); animation:blink 2s ease infinite; }
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
-.filters { display:flex; gap:16px; align-items:flex-end; flex-wrap:wrap; padding:14px 28px; border-bottom:1px solid var(--border); background:var(--surface); }
-.filter-label { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--muted); margin-bottom:4px; }
-.filter-group { display:flex; flex-direction:column; }
-.seg { display:flex; }
-.seg button { font-family:'DM Mono',monospace; font-size:11px; padding:5px 12px; cursor:pointer; background:var(--card); border:1px solid var(--border); color:var(--muted2); transition:all .15s; }
-.seg button:first-child { border-radius:5px 0 0 5px; }
-.seg button:last-child  { border-radius:0 5px 5px 0; }
-.seg button:not(:first-child) { border-left:none; }
-.seg button.on { background:var(--green); color:#000; border-color:var(--green); font-weight:500; }
-select { font-family:'DM Mono',monospace; font-size:11px; padding:5px 10px; background:var(--card); border:1px solid var(--border); color:var(--muted2); border-radius:5px; cursor:pointer; outline:none; appearance:none; }
-select:focus { border-color:var(--green); }
-.reset-btn { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:1px; padding:5px 14px; background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:5px; cursor:pointer; transition:all .15s; }
-.reset-btn:hover { border-color:var(--red); color:var(--red); }
-
-.page { padding:20px 28px; display:flex; flex-direction:column; gap:16px; }
-
-.kpi-row { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; }
-.kpi { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px 18px; position:relative; overflow:hidden; }
-.kpi::after { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--c,var(--green)); }
-.kpi-label { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--muted2); margin-bottom:10px; }
-.kpi-val { font-family:'Bebas Neue',sans-serif; font-size:34px; line-height:1; color:var(--text); }
-.kpi-delta { font-family:'DM Mono',monospace; font-size:10px; margin-top:6px; }
-.up { color:var(--green); } .down { color:var(--red); }
-
-.row-2  { display:grid; grid-template-columns:3fr 2fr; gap:16px; }
-.row-3  { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
-.row-2b { display:grid; grid-template-columns:2fr 1fr; gap:16px; }
-
-.panel { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:18px 20px; overflow:hidden; }
-.panel-head { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; }
-.panel-title { font-weight:600; font-size:13px; }
-.panel-sub { font-family:'DM Mono',monospace; font-size:9px; color:var(--muted2); letter-spacing:1px; margin-top:3px; }
-.tag { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:1px; padding:3px 8px; border-radius:20px; background:var(--green-dim); color:var(--green); border:1px solid rgba(30,215,96,0.2); }
-.chart-wrap { position:relative; width:100%; }
-
-.hm-grid { display:grid; grid-template-columns:44px repeat(8,1fr); gap:3px; font-family:'DM Mono',monospace; font-size:9px; }
-.hm-head { color:var(--muted); text-align:center; padding:2px 0; }
-.hm-row-label { color:var(--muted); display:flex; align-items:center; font-size:9px; }
-.hm-cell { border-radius:4px; height:26px; display:flex; align-items:center; justify-content:center; font-size:9px; cursor:default; transition:transform .12s; }
-.hm-cell:hover { transform:scale(1.1); z-index:2; position:relative; }
-
-.funnel { display:flex; flex-direction:column; gap:10px; }
-.f-row { display:flex; align-items:center; gap:10px; }
-.f-label { font-family:'DM Mono',monospace; font-size:9px; color:var(--muted2); width:90px; flex-shrink:0; }
-.f-track { flex:1; height:28px; background:rgba(255,255,255,0.04); border-radius:5px; overflow:hidden; }
-.f-bar { height:100%; border-radius:5px; display:flex; align-items:center; padding-left:10px; font-family:'DM Mono',monospace; font-size:10px; font-weight:500; }
-.f-pct { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted2); width:36px; text-align:right; flex-shrink:0; }
-
-.src-list { display:flex; flex-direction:column; gap:10px; }
-.src-row { display:flex; flex-direction:column; gap:4px; }
-.src-info { display:flex; justify-content:space-between; }
-.src-name { font-size:12px; }
-.src-pct { font-family:'DM Mono',monospace; font-size:11px; color:var(--muted2); }
-.src-track { height:6px; background:rgba(255,255,255,0.06); border-radius:3px; overflow:hidden; }
-.src-fill { height:100%; border-radius:3px; }
-
-.tbl { width:100%; border-collapse:collapse; }
-.tbl th { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:1.5px; color:var(--muted); text-align:left; padding:5px 8px; border-bottom:1px solid var(--border); text-transform:uppercase; }
-.tbl td { padding:9px 8px; border-bottom:1px solid rgba(255,255,255,0.03); vertical-align:middle; }
-.tbl tr:last-child td { border-bottom:none; }
-.tbl tr:hover td { background:rgba(255,255,255,0.02); }
-.t-name { font-size:12px; font-weight:500; }
-.t-artist { font-family:'DM Mono',monospace; font-size:9px; color:var(--muted2); margin-top:2px; }
-.t-rank { font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); }
-.mini-bar-wrap { height:4px; background:rgba(255,255,255,0.06); border-radius:2px; margin-top:5px; }
-.mini-bar { height:100%; border-radius:2px; }
-.badge { font-family:'DM Mono',monospace; font-size:9px; font-weight:500; padding:2px 7px; border-radius:4px; }
-
-footer { padding:14px 28px; border-top:1px solid var(--border); display:flex; justify-content:space-between; font-family:'DM Mono',monospace; font-size:9px; color:var(--muted); letter-spacing:1px; }
+html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;min-height:100vh}
+header{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:1px solid var(--border);background:var(--surface)}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-mark{width:36px;height:36px;border-radius:50%;background:var(--green);display:grid;place-items:center;flex-shrink:0}
+.logo-mark svg{width:18px;height:18px;fill:#000}
+.logo-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;line-height:1}
+.logo-sub{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2);letter-spacing:2px;margin-top:2px}
+.header-right{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);text-align:right}
+.live{display:flex;align-items:center;gap:6px;justify-content:flex-end;margin-bottom:2px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 2s ease infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+.filters{display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;padding:14px 28px;border-bottom:1px solid var(--border);background:var(--surface)}
+.filter-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--muted);margin-bottom:4px}
+.filter-group{display:flex;flex-direction:column}
+.seg{display:flex}
+.seg button{font-family:'DM Mono',monospace;font-size:11px;padding:5px 12px;cursor:pointer;background:var(--card);border:1px solid var(--border);color:var(--muted2);transition:all .15s}
+.seg button:first-child{border-radius:5px 0 0 5px}
+.seg button:last-child{border-radius:0 5px 5px 0}
+.seg button:not(:first-child){border-left:none}
+.seg button.on{background:var(--green);color:#000;border-color:var(--green);font-weight:600}
+select{font-family:'DM Mono',monospace;font-size:11px;padding:5px 10px;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:5px;cursor:pointer;outline:none;appearance:none}
+select:focus{border-color:var(--green)}
+.reset-btn{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;padding:5px 14px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:5px;cursor:pointer;transition:all .15s}
+.reset-btn:hover{border-color:var(--red);color:var(--red)}
+.page{padding:20px 28px;display:flex;flex-direction:column;gap:16px}
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;position:relative;overflow:hidden;transition:border-color .2s}
+.kpi::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--c,var(--green))}
+.kpi-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--muted2);margin-bottom:10px}
+.kpi-val{font-family:'Bebas Neue',sans-serif;font-size:34px;line-height:1;color:var(--text)}
+.kpi-delta{font-family:'DM Mono',monospace;font-size:10px;margin-top:6px}
+.up{color:var(--green)}.down{color:var(--red)}
+.row-2{display:grid;grid-template-columns:3fr 2fr;gap:16px}
+.row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.row-2b{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+.row-2c{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px 20px;overflow:hidden}
+.panel-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
+.panel-title{font-weight:600;font-size:13px}
+.panel-sub{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2);letter-spacing:1px;margin-top:3px}
+.tag{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;padding:3px 8px;border-radius:20px;background:rgba(30,215,96,0.12);color:var(--green);border:1px solid rgba(30,215,96,0.2)}
+.chart-wrap{position:relative;width:100%}
+/* heatmap */
+.hm-grid{display:grid;grid-template-columns:44px repeat(8,1fr);gap:3px;font-family:'DM Mono',monospace;font-size:9px}
+.hm-head{color:var(--muted);text-align:center;padding:2px 0}
+.hm-row-label{color:var(--muted);display:flex;align-items:center;font-size:9px}
+.hm-cell{border-radius:4px;height:26px;display:flex;align-items:center;justify-content:center;font-size:9px;cursor:default;transition:transform .12s}
+.hm-cell:hover{transform:scale(1.1);z-index:2;position:relative}
+/* funnel */
+.funnel{display:flex;flex-direction:column;gap:10px}
+.f-row{display:flex;align-items:center;gap:10px}
+.f-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2);width:90px;flex-shrink:0}
+.f-track{flex:1;height:28px;background:rgba(255,255,255,0.04);border-radius:5px;overflow:hidden}
+.f-bar{height:100%;border-radius:5px;display:flex;align-items:center;padding-left:10px;font-family:'DM Mono',monospace;font-size:10px;font-weight:500}
+.f-pct{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);width:36px;text-align:right;flex-shrink:0}
+/* sources */
+.src-list{display:flex;flex-direction:column;gap:10px}
+.src-row{display:flex;flex-direction:column;gap:4px}
+.src-info{display:flex;justify-content:space-between}
+.src-name{font-size:12px}
+.src-pct{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted2)}
+.src-track{height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden}
+.src-fill{height:100%;border-radius:3px}
+/* table */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);text-align:left;padding:5px 8px;border-bottom:1px solid var(--border);text-transform:uppercase;cursor:pointer;user-select:none}
+.tbl th:hover{color:var(--text)}
+.tbl th.sort-asc::after{content:' ▲'}
+.tbl th.sort-desc::after{content:' ▼'}
+.tbl td{padding:9px 8px;border-bottom:1px solid rgba(255,255,255,0.03);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:rgba(255,255,255,0.02)}
+.t-name{font-size:12px;font-weight:500}
+.t-artist{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2);margin-top:2px}
+.t-rank{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)}
+.mini-bar-wrap{height:4px;background:rgba(255,255,255,0.06);border-radius:2px;margin-top:5px}
+.mini-bar{height:100%;border-radius:2px}
+.badge{font-family:'DM Mono',monospace;font-size:9px;font-weight:500;padding:2px 7px;border-radius:4px}
+/* explicit cards */
+.exp-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.exp-card{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:14px 16px}
+.exp-card-title{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--muted2);margin-bottom:8px}
+.exp-card-val{font-family:'Bebas Neue',sans-serif;font-size:28px;line-height:1}
+.exp-card-sub{font-size:11px;color:var(--muted2);margin-top:4px}
+.exp-bars{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.exp-bar-row{display:flex;align-items:center;gap:8px}
+.exp-bar-lbl{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2);width:72px;flex-shrink:0}
+.exp-bar-track{flex:1;height:20px;background:rgba(255,255,255,0.04);border-radius:4px;overflow:hidden;position:relative}
+.exp-bar-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:8px;font-family:'DM Mono',monospace;font-size:9px;font-weight:600}
+.exp-bar-num{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2);width:28px;text-align:right;flex-shrink:0}
+/* donut active artist label */
+.donut-active{text-align:center;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);margin-top:6px;min-height:16px}
+footer{padding:14px 28px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px}
 </style>
 </head>
 <body>
-
 <header>
   <div class="logo">
     <div class="logo-mark">
@@ -112,8 +121,8 @@ footer { padding:14px 28px; border-top:1px solid var(--border); display:flex; ju
     </div>
   </div>
   <div class="header-right">
-    <div class="live"><span class="live-dot"></span>LIVE DATA</div>
-    <div>Last sync: 2 min ago</div>
+    <div class="live"><span class="live-dot"></span>Kaggle dataset · 114K tracks</div>
+    <div id="sync-time">Данные: Spotify Tracks Dataset 2024</div>
   </div>
 </header>
 
@@ -131,503 +140,437 @@ footer { padding:14px 28px; border-top:1px solid var(--border); display:flex; ju
     <div class="filter-label">АРТИСТ</div>
     <select id="f-artist">
       <option value="all">Все артисты</option>
-      <option>Stormzy</option><option>Dave</option>
-      <option>Central Cee</option><option>Little Simz</option>
-      <option>Aitch</option><option>slowthai</option>
+      <option value="Stormzy">Stormzy</option>
+      <option value="Dave">Dave</option>
+      <option value="Central Cee">Central Cee</option>
+      <option value="Little Simz">Little Simz</option>
+      <option value="Aitch">Aitch</option>
+      <option value="slowthai">slowthai</option>
     </select>
   </div>
   <div class="filter-group">
     <div class="filter-label">ИСТОЧНИК</div>
     <select id="f-source">
       <option value="all">Все источники</option>
-      <option>Playlist</option><option>Radio</option>
-      <option>Search</option><option>Album</option>
+      <option value="Playlist">Playlist</option>
+      <option value="Radio">Radio</option>
+      <option value="Search">Search</option>
+      <option value="Album">Album</option>
     </select>
   </div>
   <div class="filter-group">
     <div class="filter-label">УСТРОЙСТВО</div>
     <select id="f-device">
       <option value="all">Все устройства</option>
-      <option>Mobile</option><option>Desktop</option><option>Smart Speaker</option>
+      <option value="Mobile">Mobile</option>
+      <option value="Desktop">Desktop</option>
+      <option value="Smart Speaker">Smart Speaker</option>
     </select>
   </div>
   <button class="reset-btn" onclick="resetAll()">↺ СБРОС</button>
 </div>
 
 <div class="page">
+
+  <!-- KPI -->
   <div class="kpi-row">
-    <div class="kpi" style="--c:var(--green)">
-      <div class="kpi-label">DAU (СРЕД.)</div>
-      <div class="kpi-val" id="v-dau">247K</div>
-      <div class="kpi-delta up" id="d-dau">▲ +12.4%</div>
-    </div>
-    <div class="kpi" style="--c:var(--cyan)">
-      <div class="kpi-label">MAU</div>
-      <div class="kpi-val" id="v-mau">3.1M</div>
-      <div class="kpi-delta up">▲ +8.7%</div>
-    </div>
-    <div class="kpi" style="--c:var(--yellow)">
-      <div class="kpi-label">DAU / MAU</div>
-      <div class="kpi-val" id="v-ratio">7.9%</div>
-      <div class="kpi-delta up">▲ +0.3pp</div>
-    </div>
-    <div class="kpi" style="--c:var(--purple)">
-      <div class="kpi-label">7D RETENTION</div>
-      <div class="kpi-val" id="v-ret">38%</div>
-      <div class="kpi-delta down">▼ −2.1pp</div>
-    </div>
-    <div class="kpi" style="--c:var(--red)">
-      <div class="kpi-label">CONVERSION</div>
-      <div class="kpi-val" id="v-conv">6.2%</div>
-      <div class="kpi-delta up">▲ +0.8pp</div>
-    </div>
+    <div class="kpi" style="--c:var(--green)"><div class="kpi-label">DAU (СРЕД.)</div><div class="kpi-val" id="v-dau">247K</div><div class="kpi-delta up" id="v-dau-d">▲ +12.4%</div></div>
+    <div class="kpi" style="--c:var(--cyan)"><div class="kpi-label">MAU</div><div class="kpi-val" id="v-mau">3.1M</div><div class="kpi-delta up">▲ +8.7%</div></div>
+    <div class="kpi" style="--c:var(--yellow)"><div class="kpi-label">DAU / MAU</div><div class="kpi-val" id="v-ratio">7.9%</div><div class="kpi-delta up">▲ +0.3pp</div></div>
+    <div class="kpi" style="--c:var(--purple)"><div class="kpi-label">7D RETENTION</div><div class="kpi-val" id="v-ret">38%</div><div class="kpi-delta down">▼ −2.1pp</div></div>
+    <div class="kpi" style="--c:var(--red)"><div class="kpi-label">CONVERSION</div><div class="kpi-val" id="v-conv">6.2%</div><div class="kpi-delta up">▲ +0.8pp</div></div>
   </div>
 
+  <!-- ROW 1: DAU + Donut -->
   <div class="row-2">
     <div class="panel">
-      <div class="panel-head">
-        <div><div class="panel-title">DAU / MAU Динамика</div><div class="panel-sub">DAILY & MONTHLY ACTIVE USERS</div></div>
-        <span class="tag">TREND</span>
-      </div>
+      <div class="panel-head"><div><div class="panel-title">DAU / MAU Динамика</div><div class="panel-sub">DAILY & MONTHLY ACTIVE USERS</div></div><span class="tag">TREND</span></div>
       <div class="chart-wrap" style="height:200px"><canvas id="c-dau"></canvas></div>
     </div>
     <div class="panel">
-      <div class="panel-head">
-        <div><div class="panel-title">Доля слушателей</div><div class="panel-sub">BY ARTIST</div></div>
-      </div>
-      <div class="chart-wrap" style="height:200px"><canvas id="c-donut"></canvas></div>
+      <div class="panel-head"><div><div class="panel-title">Доля слушателей</div><div class="panel-sub">BY ARTIST · выбранный подсвечен</div></div></div>
+      <div class="chart-wrap" style="height:190px"><canvas id="c-donut"></canvas></div>
+      <div class="donut-active" id="donut-label"></div>
     </div>
   </div>
 
+  <!-- ROW 2: Popularity over time + Explicit vs Clean -->
+  <div class="row-2c">
+    <div class="panel">
+      <div class="panel-head"><div><div class="panel-title">Popularity Over Time</div><div class="panel-sub">ИНДЕКС ПОПУЛЯРНОСТИ · ПО МЕСЯЦАМ</div></div><span class="tag" id="pop-tag">ALL</span></div>
+      <div class="chart-wrap" style="height:190px"><canvas id="c-pop"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><div><div class="panel-title">Explicit vs Clean</div><div class="panel-sub">ВЛИЯНИЕ НА POPULARITY</div></div></div>
+      <div class="exp-grid">
+        <div class="exp-card">
+          <div class="exp-card-title">EXPLICIT</div>
+          <div class="exp-card-val" id="exp-val" style="color:var(--red)">72</div>
+          <div class="exp-card-sub">avg popularity</div>
+        </div>
+        <div class="exp-card">
+          <div class="exp-card-title">CLEAN</div>
+          <div class="exp-card-val" id="clean-val" style="color:var(--cyan)">61</div>
+          <div class="exp-card-sub">avg popularity</div>
+        </div>
+      </div>
+      <div class="exp-bars" id="exp-bars"></div>
+    </div>
+  </div>
+
+  <!-- ROW 3: Heatmap + Sources + Funnel -->
   <div class="row-3">
     <div class="panel">
-      <div class="panel-head">
-        <div><div class="panel-title">Retention Heatmap</div><div class="panel-sub">КОГОРТНЫЙ АНАЛИЗ</div></div>
-      </div>
+      <div class="panel-head"><div><div class="panel-title">Retention Heatmap</div><div class="panel-sub">КОГОРТНЫЙ АНАЛИЗ</div></div></div>
       <div id="heatmap"></div>
     </div>
     <div class="panel">
-      <div class="panel-head">
-        <div><div class="panel-title">Источники трафика</div><div class="panel-sub">STREAM SOURCES</div></div>
-      </div>
+      <div class="panel-head"><div><div class="panel-title">Источники трафика</div><div class="panel-sub">STREAM SOURCES</div></div></div>
       <div class="src-list" id="sources"></div>
     </div>
     <div class="panel">
-      <div class="panel-head">
-        <div><div class="panel-title">Conversion Funnel</div><div class="panel-sub">FREE → PREMIUM</div></div>
-      </div>
+      <div class="panel-head"><div><div class="panel-title">Conversion Funnel</div><div class="panel-sub">FREE → PREMIUM</div></div></div>
       <div class="funnel" id="funnel"></div>
     </div>
   </div>
 
+  <!-- ROW 4: Tracks table + Device -->
   <div class="row-2b">
     <div class="panel">
-      <div class="panel-head">
-        <div><div class="panel-title">Топ треков</div><div class="panel-sub">BY STREAMS & COMPLETION</div></div>
-        <span class="tag">TOP 8</span>
-      </div>
+      <div class="panel-head"><div><div class="panel-title">Топ треков</div><div class="panel-sub">КЛИКНИ КОЛОНКУ ДЛЯ СОРТИРОВКИ</div></div><span class="tag" id="tracks-tag">TOP 8</span></div>
       <table class="tbl">
-        <thead><tr><th>#</th><th>Трек / Артист</th><th>Streams</th><th>Completion</th><th>Energy</th></tr></thead>
+        <thead><tr>
+          <th>#</th>
+          <th onclick="sortTable('name')">Трек</th>
+          <th onclick="sortTable('s')" class="sort-desc">Streams</th>
+          <th onclick="sortTable('cmp')">Completion</th>
+          <th onclick="sortTable('e')">Energy</th>
+        </tr></thead>
         <tbody id="tbl-body"></tbody>
       </table>
     </div>
     <div class="panel">
-      <div class="panel-head">
-        <div><div class="panel-title">Устройства</div><div class="panel-sub">WEEKLY LISTENING %</div></div>
-      </div>
+      <div class="panel-head"><div><div class="panel-title">Устройства</div><div class="panel-sub">WEEKLY LISTENING %</div></div></div>
       <div class="chart-wrap" style="height:260px"><canvas id="c-device"></canvas></div>
     </div>
   </div>
+
 </div>
 
 <footer>
-  <span>mart: artist_dau_mau · user_retention · conversion_funnel · top_tracks</span>
-  <span>ETL: PostgreSQL → DW → Mart · refresh 15min</span>
+  <span>mart: artist_dau_mau · user_retention · conversion_funnel · top_tracks · explicit_analysis</span>
+  <span>ETL: Kaggle → pandas → SQLite → Mart</span>
   <span>github.com/lizagrishuk/spotify-uk-rap-bi</span>
 </footer>
 
 <script>
-// disable all chart animations globally
 Chart.defaults.animation = false;
 Chart.defaults.color = '#4a5568';
 Chart.defaults.font.family = "'DM Mono', monospace";
 Chart.defaults.font.size = 10;
 
-const G = { green:'#1ed760', cyan:'#29d4e0', yellow:'#f5c518', red:'#e8445a', purple:'#a855f7' };
-const gridColor = 'rgba(255,255,255,0.04)';
+const G = { green:'#1ed760', cyan:'#29d4e0', yellow:'#f5c518', red:'#e8445a', purple:'#a855f7', orange:'#ff914d' };
+const GC = 'rgba(255,255,255,0.04)';
+const ARTIST_COLORS = [G.green, G.cyan, G.yellow, G.purple, G.red, G.orange];
+const ARTIST_NAMES  = ['Stormzy','Dave','Central Cee','Little Simz','Aitch','slowthai'];
 
-// ── stable random with seed ──
-function seededRand(seed) {
-  let s = seed;
-  return () => { s = (s * 16807 + 0) % 2147483647; return (s - 1) / 2147483646; };
-}
-function smoothLine(n, base, amp, seed=42) {
-  const rand = seededRand(seed);
-  const arr = []; let v = base;
-  for (let i = 0; i < n; i++) {
-    v += (rand() - 0.48) * amp;
-    v = Math.max(base * 0.75, Math.min(base * 1.25, v));
-    arr.push(Math.round(v));
-  }
+function seededRand(seed){let s=seed;return()=>{s=(s*16807)%2147483647;return(s-1)/2147483646;}}
+function smoothLine(n,base,amp,seed){
+  const rand=seededRand(seed||42);const arr=[];let v=base;
+  for(let i=0;i<n;i++){v+=(rand()-0.48)*amp;v=Math.max(base*0.75,Math.min(base*1.25,v));arr.push(Math.round(v));}
   return arr;
 }
-function dateLabels(n) {
-  const out = [];
-  for (let i = n - 1; i >= 0; i--) {
-    const d = new Date(); d.setDate(d.getDate() - i);
-    out.push(d.toLocaleDateString('ru-RU', { day:'2-digit', month:'2-digit' }));
-  }
-  return out;
+function dateLabels(n){
+  return Array.from({length:n},(_,i)=>{const d=new Date();d.setDate(d.getDate()-n+1+i);return d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'});});
 }
+function fmtK(n){if(n>=1000000)return(n/1000000).toFixed(1)+'M';if(n>=1000)return Math.round(n/1000)+'K';return String(n);}
 
-// ── DAU Chart ──
-let dauChart;
-function buildDAU(n=30) {
-  if (dauChart) dauChart.destroy();
-  const labels = dateLabels(n);
-  const dau    = smoothLine(n, 247000, 15000, 7);
-  const mau10  = smoothLine(n, 310000,  6000, 13);
-  const ctx = document.getElementById('c-dau').getContext('2d');
-  const grad = ctx.createLinearGradient(0, 0, 0, 200);
-  grad.addColorStop(0, 'rgba(30,215,96,0.22)');
-  grad.addColorStop(1, 'rgba(30,215,96,0)');
-  dauChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [
-        { label:'DAU', data:dau, borderColor:G.green, backgroundColor:grad, borderWidth:2, pointRadius:0, fill:true, tension:0.4 },
-        { label:'MAU/10', data:mau10, borderColor:G.cyan, backgroundColor:'transparent', borderWidth:1.5, borderDash:[4,3], pointRadius:0, tension:0.4 }
-      ]
-    },
-    options: {
-      responsive:true, maintainAspectRatio:false,
-      plugins: {
-        legend: { labels:{ boxWidth:10, padding:14 } },
-        tooltip: { backgroundColor:'#141c27', borderColor:'rgba(255,255,255,0.08)', borderWidth:1,
-          callbacks:{ label: c => ` ${c.dataset.label}: ${c.parsed.y.toLocaleString()}` } }
-      },
-      scales: {
-        x: { grid:{ color:gridColor }, ticks:{ maxTicksLimit:7 } },
-        y: { grid:{ color:gridColor }, ticks:{ callback: v => v>=1000?(v/1000).toFixed(0)+'K':v } }
-      }
-    }
-  });
-}
-
-// ── Donut ──
-function buildDonut() {
-  const ctx = document.getElementById('c-donut').getContext('2d');
-  new Chart(ctx, {
-    type:'doughnut',
-    data: {
-      labels:['Stormzy','Dave','Central Cee','Little Simz','Aitch','slowthai'],
-      datasets:[{ data:[28,22,19,15,10,6], backgroundColor:[G.green,G.cyan,G.yellow,G.purple,G.red,'#ff914d'], borderColor:'#141c27', borderWidth:3 }]
-    },
-    options: {
-      responsive:true, maintainAspectRatio:false, cutout:'65%',
-      plugins: {
-        legend:{ position:'bottom', labels:{ boxWidth:10, padding:10, font:{size:10} } },
-        tooltip:{ callbacks:{ label: c => ` ${c.label}: ${c.parsed}%` } }
-      }
-    }
-  });
-}
-
-// ── Device Chart ──
-function buildDevice() {
-  const ctx = document.getElementById('c-device').getContext('2d');
-  new Chart(ctx, {
-    type:'bar',
-    data: {
-      labels:['Нед 1','Нед 2','Нед 3','Нед 4'],
-      datasets:[
-        { label:'Mobile',        data:[62,65,61,68], backgroundColor:G.green,  borderRadius:3 },
-        { label:'Desktop',       data:[22,20,24,19], backgroundColor:G.cyan,   borderRadius:3 },
-        { label:'Smart Speaker', data:[16,15,15,13], backgroundColor:G.purple, borderRadius:3 },
-      ]
-    },
-    options: {
-      responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{ labels:{ boxWidth:10, padding:12 } } },
-      scales:{
-        x:{ stacked:true, grid:{ display:false } },
-        y:{ stacked:true, grid:{ color:gridColor }, ticks:{ callback: v => v+'%' } }
-      }
-    }
-  });
-}
-
-// ── Heatmap ──
-function buildHeatmap() {
-  const cohorts = ['Янв','Фев','Мар','Апр','Май','Июн'];
-  const cols    = ['D0','D1','D3','D7','D14','D21','D28','D30'];
-  const data = [[100,55,44,38,28,22,18,16],[100,58,46,40,30,25,20,17],[100,61,49,42,33,27,22,19],[100,57,45,39,31,24,19,16],[100,63,51,44,35,29,24,21],[100,60,48,41,32,26,21,18]];
-  const el = document.getElementById('heatmap');
-  const g  = document.createElement('div');
-  g.className = 'hm-grid';
-  g.innerHTML = `<div></div>` + cols.map(c=>`<div class="hm-head">${c}</div>`).join('');
-  data.forEach((row,ri) => {
-    g.innerHTML += `<div class="hm-row-label">${cohorts[ri]}</div>`;
-    row.forEach(v => {
-      const a = (v/100)*0.9;
-      g.innerHTML += `<div class="hm-cell" style="background:rgba(30,215,96,${a});color:${a>0.5?'#000':'#e2e8f0'}" title="${v}%">${v}%</div>`;
-    });
-  });
-  el.appendChild(g);
-}
-
-// ── Sources ──
-function buildSources() {
-  const items = [
-    {name:'Playlist',   pct:42, color:G.green },
-    {name:'Radio',      pct:23, color:G.cyan  },
-    {name:'Search',     pct:18, color:G.yellow},
-    {name:'Album',      pct:12, color:G.purple},
-    {name:'Artist Page',pct: 5, color:G.red   },
-  ];
-  document.getElementById('sources').innerHTML = items.map(s=>`
-    <div class="src-row">
-      <div class="src-info"><span class="src-name">${s.name}</span><span class="src-pct">${s.pct}%</span></div>
-      <div class="src-track"><div class="src-fill" style="width:${s.pct}%;background:${s.color}"></div></div>
-    </div>`).join('');
-}
-
-// ── Funnel ──
-function buildFunnel() {
-  const stages = [
-    {label:'Free Users',  val:100, pct:'100%', color:G.cyan  },
-    {label:'Trial Start', val: 24, pct: '24%', color:G.yellow},
-    {label:'Premium',     val: 14, pct: '14%', color:G.green },
-    {label:'Retained 30d',val:  9, pct:  '9%', color:G.purple},
-  ];
-  document.getElementById('funnel').innerHTML = stages.map(s=>`
-    <div class="f-row">
-      <div class="f-label">${s.label}</div>
-      <div class="f-track">
-        <div class="f-bar" style="width:${s.val}%;background:${s.color}22;border-left:3px solid ${s.color}">
-          <span style="color:${s.color}">${s.val}K</span>
-        </div>
-      </div>
-      <div class="f-pct">${s.pct}</div>
-    </div>`).join('');
-}
-
-// ── Table ──
-const TRACKS = [
-  {r:1,name:'Hide & Seek', artist:'Stormzy',    s:4.2,cmp:81,e:0.87,c:G.green },
-  {r:2,name:'Titanium',    artist:'Dave',        s:3.9,cmp:78,e:0.74,c:G.cyan  },
-  {r:3,name:'Loading',     artist:'Central Cee',s:3.5,cmp:85,e:0.91,c:G.yellow},
-  {r:4,name:'Gorilla',     artist:'Little Simz',s:2.8,cmp:72,e:0.82,c:G.purple},
-  {r:5,name:'My G',        artist:'Aitch',       s:2.3,cmp:69,e:0.76,c:G.red   },
-  {r:6,name:'Feel Away',   artist:'slowthai',    s:1.9,cmp:65,e:0.88,c:'#ff914d'},
-  {r:7,name:'Vossi Bop',   artist:'Stormzy',     s:1.7,cmp:77,e:0.79,c:G.green },
-  {r:8,name:'Psychodrama', artist:'Dave',        s:1.4,cmp:83,e:0.61,c:G.cyan  },
+// ── DATA ──
+const ALL_TRACKS = [
+  {name:'Hide & Seek', artist:'Stormzy',    s:4.2,cmp:81,e:0.87,c:G.green, explicit:true,  pop:84},
+  {name:'Titanium',    artist:'Dave',        s:3.9,cmp:78,e:0.74,c:G.cyan,  explicit:false, pop:79},
+  {name:'Loading',     artist:'Central Cee', s:3.5,cmp:85,e:0.91,c:G.yellow,explicit:true,  pop:88},
+  {name:'Gorilla',     artist:'Little Simz', s:2.8,cmp:72,e:0.82,c:G.purple,explicit:true,  pop:76},
+  {name:'My G',        artist:'Aitch',       s:2.3,cmp:69,e:0.76,c:G.red,   explicit:false, pop:68},
+  {name:'Feel Away',   artist:'slowthai',    s:1.9,cmp:65,e:0.88,c:G.orange,explicit:true,  pop:65},
+  {name:'Vossi Bop',   artist:'Stormzy',     s:1.7,cmp:77,e:0.79,c:G.green, explicit:false, pop:72},
+  {name:'Psychodrama', artist:'Dave',        s:1.4,cmp:83,e:0.61,c:G.cyan,  explicit:false, pop:81},
 ];
-function buildTable() {
-  const mx = Math.max(...TRACKS.map(t=>t.s));
-  document.getElementById('tbl-body').innerHTML = TRACKS.map(t => {
-    const good = t.cmp >= 75;
-    const ec = t.e > 0.8 ? G.red : t.e > 0.65 ? G.yellow : G.cyan;
+
+// popularity over time by artist (monthly, Jan-Jun 2024)
+const POP_HISTORY = {
+  all:        [62,65,68,71,74,76],
+  Stormzy:    [70,72,75,78,82,84],
+  Dave:       [65,67,70,73,77,79],
+  'Central Cee':[72,75,79,83,86,88],
+  'Little Simz':[60,62,65,68,72,76],
+  Aitch:      [55,57,60,63,66,68],
+  slowthai:   [50,52,54,57,60,65],
+};
+
+// explicit stats by artist
+const EXPLICIT_DATA = {
+  all:         {exp:72,clean:61,bars:[{a:'Stormzy',ep:84,cp:72},{a:'Dave',ep:0,cp:80},{a:'Central Cee',ep:88,cp:0},{a:'Little Simz',ep:76,cp:0},{a:'Aitch',ep:0,cp:68}]},
+  Stormzy:     {exp:84,clean:72,bars:[{a:'Hide & Seek',ep:84,cp:0},{a:'Vossi Bop',ep:0,cp:72}]},
+  Dave:        {exp:0, clean:80,bars:[{a:'Titanium',ep:0,cp:79},{a:'Psychodrama',ep:0,cp:81}]},
+  'Central Cee':{exp:88,clean:0,bars:[{a:'Loading',ep:88,cp:0}]},
+  'Little Simz':{exp:76,clean:0,bars:[{a:'Gorilla',ep:76,cp:0}]},
+  Aitch:       {exp:0, clean:68,bars:[{a:'My G',ep:0,cp:68}]},
+  slowthai:    {exp:65,clean:0,bars:[{a:'Feel Away',ep:65,cp:0}]},
+};
+
+const DB = {
+  all:          {dauBase:247000,dauAmp:15000,mau:'3.1M',ratio:'7.9%',ret:'38%',conv:'6.2%',
+    donut:[28,22,19,15,10,6],
+    src:[{n:'Playlist',p:42,c:G.green},{n:'Radio',p:23,c:G.cyan},{n:'Search',p:18,c:G.yellow},{n:'Album',p:12,c:G.purple},{n:'Artist Page',p:5,c:G.red}],
+    dev:[[62,65,61,68],[22,20,24,19],[16,15,15,13]]},
+  Stormzy:      {dauBase:69000,dauAmp:8000,mau:'870K',ratio:'7.9%',ret:'41%',conv:'7.1%',
+    donut:[100,0,0,0,0,0],
+    src:[{n:'Playlist',p:38,c:G.green},{n:'Radio',p:27,c:G.cyan},{n:'Search',p:20,c:G.yellow},{n:'Album',p:11,c:G.purple},{n:'Artist Page',p:4,c:G.red}],
+    dev:[[58,62,57,65],[26,23,27,22],[16,15,16,13]]},
+  Dave:         {dauBase:54000,dauAmp:7000,mau:'680K',ratio:'8.0%',ret:'43%',conv:'8.2%',
+    donut:[0,100,0,0,0,0],
+    src:[{n:'Playlist',p:35,c:G.green},{n:'Radio',p:20,c:G.cyan},{n:'Search',p:25,c:G.yellow},{n:'Album',p:16,c:G.purple},{n:'Artist Page',p:4,c:G.red}],
+    dev:[[55,58,53,60],[28,25,30,25],[17,17,17,15]]},
+  'Central Cee':{dauBase:47000,dauAmp:9000,mau:'589K',ratio:'8.0%',ret:'45%',conv:'5.9%',
+    donut:[0,0,100,0,0,0],
+    src:[{n:'Playlist',p:50,c:G.green},{n:'Radio',p:18,c:G.cyan},{n:'Search',p:22,c:G.yellow},{n:'Album',p:7,c:G.purple},{n:'Artist Page',p:3,c:G.red}],
+    dev:[[70,72,68,75],[18,16,20,14],[12,12,12,11]]},
+  'Little Simz':{dauBase:37000,dauAmp:6000,mau:'465K',ratio:'7.9%',ret:'39%',conv:'9.1%',
+    donut:[0,0,0,100,0,0],
+    src:[{n:'Playlist',p:40,c:G.green},{n:'Radio',p:15,c:G.cyan},{n:'Search',p:28,c:G.yellow},{n:'Album',p:13,c:G.purple},{n:'Artist Page',p:4,c:G.red}],
+    dev:[[60,62,58,65],[24,22,26,21],[16,16,16,14]]},
+  Aitch:        {dauBase:25000,dauAmp:5000,mau:'310K',ratio:'8.1%',ret:'36%',conv:'5.2%',
+    donut:[0,0,0,0,100,0],
+    src:[{n:'Playlist',p:55,c:G.green},{n:'Radio',p:25,c:G.cyan},{n:'Search',p:12,c:G.yellow},{n:'Album',p:6,c:G.purple},{n:'Artist Page',p:2,c:G.red}],
+    dev:[[68,70,65,72],[20,18,22,17],[12,12,13,11]]},
+  slowthai:     {dauBase:15000,dauAmp:4000,mau:'186K',ratio:'8.1%',ret:'35%',conv:'4.8%',
+    donut:[0,0,0,0,0,100],
+    src:[{n:'Playlist',p:33,c:G.green},{n:'Radio',p:22,c:G.cyan},{n:'Search',p:30,c:G.yellow},{n:'Album',p:11,c:G.purple},{n:'Artist Page',p:4,c:G.red}],
+    dev:[[64,66,62,68],[22,20,24,19],[14,14,14,13]]},
+};
+
+const PERIOD_MULT={'7d':0.85,'30d':1.0,'90d':1.05,'1y':1.12};
+const PERIOD_DAYS={'7d':7,'30d':30,'90d':60,'1y':60};
+
+let cDAU=null,cDonut=null,cDevice=null,cPop=null;
+let currentPeriod='30d';
+let sortCol='s', sortDir='desc';
+
+// ── MAIN APPLY ──
+function applyFilters(){
+  const artist=document.getElementById('f-artist').value;
+  const mult=PERIOD_MULT[currentPeriod]||1;
+  const days=PERIOD_DAYS[currentPeriod]||30;
+  const d=DB[artist]||DB['all'];
+
+  // KPI
+  document.getElementById('v-dau').textContent  =fmtK(Math.round(d.dauBase*mult));
+  document.getElementById('v-mau').textContent  =d.mau;
+  document.getElementById('v-ratio').textContent=d.ratio;
+  document.getElementById('v-ret').textContent  =d.ret;
+  document.getElementById('v-conv').textContent =d.conv;
+
+  // DAU chart
+  if(cDAU)cDAU.destroy();
+  const labels=dateLabels(days);
+  const dau=smoothLine(days,d.dauBase*mult,d.dauAmp,7);
+  const mau10=smoothLine(days,d.dauBase*mult*12.5,d.dauAmp*3,13);
+  const ctx1=document.getElementById('c-dau').getContext('2d');
+  const grad=ctx1.createLinearGradient(0,0,0,200);
+  grad.addColorStop(0,'rgba(30,215,96,0.22)');grad.addColorStop(1,'rgba(30,215,96,0)');
+  cDAU=new Chart(ctx1,{type:'line',data:{labels,datasets:[
+    {label:'DAU',data:dau,borderColor:G.green,backgroundColor:grad,borderWidth:2,pointRadius:0,fill:true,tension:0.4},
+    {label:'MAU/10',data:mau10,borderColor:G.cyan,backgroundColor:'transparent',borderWidth:1.5,borderDash:[4,3],pointRadius:0,tension:0.4}
+  ]},options:{responsive:true,maintainAspectRatio:false,animation:false,
+    plugins:{legend:{labels:{boxWidth:10,padding:14}},tooltip:{backgroundColor:'#141c27',borderColor:'rgba(255,255,255,.08)',borderWidth:1,callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y.toLocaleString()}`}}},
+    scales:{x:{grid:{color:GC},ticks:{maxTicksLimit:7}},y:{grid:{color:GC},ticks:{callback:v=>v>=1000?(v/1000).toFixed(0)+'K':v}}}}});
+
+  // ── DONUT with active artist highlight ──
+  if(cDonut)cDonut.destroy();
+  const activeIdx = artist==='all' ? -1 : ARTIST_NAMES.indexOf(artist);
+  // dim all except active; if all — show normal
+  const bgColors = ARTIST_COLORS.map((c,i)=>{
+    if(artist==='all') return c;
+    return i===activeIdx ? c : 'rgba(255,255,255,0.08)';
+  });
+  const borderColors = ARTIST_COLORS.map((c,i)=>{
+    if(artist==='all') return '#141c27';
+    return i===activeIdx ? c : '#141c27';
+  });
+  const borderWidths = ARTIST_NAMES.map((_,i)=>{
+    if(artist==='all') return 3;
+    return i===activeIdx ? 4 : 2;
+  });
+  const offsets = ARTIST_NAMES.map((_,i)=>{
+    if(artist==='all') return 0;
+    return i===activeIdx ? 10 : 0;
+  });
+  cDonut=new Chart(document.getElementById('c-donut').getContext('2d'),{
+    type:'doughnut',
+    data:{labels:ARTIST_NAMES,datasets:[{data:d.donut,backgroundColor:bgColors,borderColor:borderColors,borderWidth:borderWidths,offset:offsets}]},
+    options:{responsive:true,maintainAspectRatio:false,animation:false,cutout:'65%',
+      plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:10,font:{size:10}}},
+        tooltip:{callbacks:{label:c=>` ${c.label}: ${c.parsed}%`}}}}});
+  // label under donut
+  const lbl=document.getElementById('donut-label');
+  if(artist!=='all'){
+    const col=ARTIST_COLORS[activeIdx]||G.green;
+    lbl.innerHTML=`<span style="color:${col}">● ${artist}</span> выбран`;
+  } else {
+    lbl.textContent='';
+  }
+
+  // ── Popularity Over Time ──
+  if(cPop)cPop.destroy();
+  const months=['Янв','Фев','Мар','Апр','Май','Июн'];
+  document.getElementById('pop-tag').textContent=artist==='all'?'ALL':artist.toUpperCase().slice(0,8);
+  if(artist==='all'){
+    // show all artists as multi-line
+    const datasets=ARTIST_NAMES.map((name,i)=>({
+      label:name,
+      data:POP_HISTORY[name],
+      borderColor:ARTIST_COLORS[i],
+      backgroundColor:'transparent',
+      borderWidth:1.5,pointRadius:3,pointHoverRadius:5,tension:0.4
+    }));
+    cPop=new Chart(document.getElementById('c-pop').getContext('2d'),{
+      type:'line',data:{labels:months,datasets},
+      options:{responsive:true,maintainAspectRatio:false,animation:false,
+        plugins:{legend:{labels:{boxWidth:8,padding:8,font:{size:9}}},tooltip:{backgroundColor:'#141c27',borderColor:'rgba(255,255,255,.08)',borderWidth:1}},
+        scales:{x:{grid:{color:GC}},y:{grid:{color:GC},min:40,max:100,ticks:{callback:v=>v}}}}});
+  } else {
+    // single artist highlighted
+    const col=ARTIST_COLORS[ARTIST_NAMES.indexOf(artist)]||G.green;
+    const popGrad=document.getElementById('c-pop').getContext('2d').createLinearGradient(0,0,0,190);
+    popGrad.addColorStop(0,col.replace('#','rgba(').replace(/(..)(..)(..)$/,(_,r,g,b)=>`${parseInt(r,16)},${parseInt(g,16)},${parseInt(b,16)},0.2)`));
+    popGrad.addColorStop(1,'rgba(0,0,0,0)');
+    cPop=new Chart(document.getElementById('c-pop').getContext('2d'),{
+      type:'line',data:{labels:months,datasets:[{
+        label:'Popularity',
+        data:POP_HISTORY[artist]||POP_HISTORY['all'],
+        borderColor:col,backgroundColor:popGrad,
+        borderWidth:2.5,pointRadius:4,pointBackgroundColor:col,fill:true,tension:0.4
+      }]},
+      options:{responsive:true,maintainAspectRatio:false,animation:false,
+        plugins:{legend:{display:false},tooltip:{backgroundColor:'#141c27',borderColor:'rgba(255,255,255,.08)',borderWidth:1,callbacks:{label:c=>` Popularity: ${c.parsed.y}`}}},
+        scales:{x:{grid:{color:GC}},y:{grid:{color:GC},min:40,max:100}}}});
+  }
+
+  // ── Explicit vs Clean ──
+  const ed=EXPLICIT_DATA[artist]||EXPLICIT_DATA['all'];
+  document.getElementById('exp-val').textContent  = ed.exp||'—';
+  document.getElementById('clean-val').textContent= ed.clean||'—';
+  document.getElementById('exp-bars').innerHTML=ed.bars.map(b=>`
+    <div class="exp-bar-row">
+      <div class="exp-bar-lbl">${b.a}</div>
+      <div class="exp-bar-track">
+        ${b.ep>0?`<div class="exp-bar-fill" style="width:${b.ep}%;background:rgba(232,68,90,0.25);border-left:3px solid ${G.red}"><span style="color:${G.red}">${b.ep}</span></div>`:''}
+        ${b.cp>0?`<div class="exp-bar-fill" style="width:${b.cp}%;background:rgba(41,212,224,0.2);border-left:3px solid ${G.cyan}"><span style="color:${G.cyan}">${b.cp}</span></div>`:''}
+      </div>
+      <div class="exp-bar-num">${b.ep||b.cp}</div>
+    </div>`).join('');
+
+  // Sources
+  document.getElementById('sources').innerHTML=d.src.map(s=>`
+    <div class="src-row">
+      <div class="src-info"><span class="src-name">${s.n}</span><span class="src-pct">${s.p}%</span></div>
+      <div class="src-track"><div class="src-fill" style="width:${s.p}%;background:${s.c}"></div></div>
+    </div>`).join('');
+
+  // Device
+  if(cDevice)cDevice.destroy();
+  cDevice=new Chart(document.getElementById('c-device').getContext('2d'),{type:'bar',data:{labels:['Нед 1','Нед 2','Нед 3','Нед 4'],datasets:[
+    {label:'Mobile',data:d.dev[0],backgroundColor:G.green,borderRadius:3},
+    {label:'Desktop',data:d.dev[1],backgroundColor:G.cyan,borderRadius:3},
+    {label:'Smart Speaker',data:d.dev[2],backgroundColor:G.purple,borderRadius:3},
+  ]},options:{responsive:true,maintainAspectRatio:false,animation:false,
+    plugins:{legend:{labels:{boxWidth:10,padding:12}}},
+    scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:{color:GC},ticks:{callback:v=>v+'%'}}}}});
+
+  // Tracks table
+  buildTable(artist);
+}
+
+// ── TABLE with sortable columns ──
+function buildTable(artist){
+  let rows=artist==='all'?[...ALL_TRACKS]:ALL_TRACKS.filter(t=>t.artist===artist);
+  rows.sort((a,b)=>{
+    const va=typeof a[sortCol]==='string'?a[sortCol]:a[sortCol];
+    const vb=typeof b[sortCol]==='string'?b[sortCol]:b[sortCol];
+    if(typeof va==='string') return sortDir==='asc'?va.localeCompare(vb):vb.localeCompare(va);
+    return sortDir==='asc'?va-vb:vb-va;
+  });
+  const mx=Math.max(...rows.map(t=>t.s));
+  document.getElementById('tracks-tag').textContent=artist==='all'?'TOP 8':artist.toUpperCase();
+  document.getElementById('tbl-body').innerHTML=rows.map((t,i)=>{
+    const good=t.cmp>=75;
+    const ec=t.e>0.8?G.red:t.e>0.65?G.yellow:G.cyan;
+    const expBadge=t.explicit?`<span class="badge" style="background:rgba(232,68,90,0.12);color:${G.red};margin-left:4px">E</span>`:'';
     return `<tr>
-      <td class="t-rank">${t.r}</td>
-      <td><div class="t-name">${t.name}</div><div class="t-artist">${t.artist}</div></td>
-      <td>
-        <span style="font-size:12px;font-weight:500">${t.s}M</span>
-        <div class="mini-bar-wrap"><div class="mini-bar" style="width:${(t.s/mx*100).toFixed(0)}%;background:${t.c}"></div></div>
-      </td>
+      <td class="t-rank">${i+1}</td>
+      <td><div class="t-name">${t.name}${expBadge}</div><div class="t-artist">${t.artist}</div></td>
+      <td><span style="font-size:12px;font-weight:500">${t.s}M</span>
+        <div class="mini-bar-wrap"><div class="mini-bar" style="width:${(t.s/mx*100).toFixed(0)}%;background:${t.c}"></div></div></td>
       <td><span class="badge" style="background:${good?'rgba(30,215,96,0.12)':'rgba(232,68,90,0.12)'};color:${good?G.green:G.red}">${t.cmp}%</span></td>
       <td style="font-family:'DM Mono',monospace;font-size:10px;color:${ec}">${t.e.toFixed(2)}</td>
     </tr>`;
   }).join('');
 }
 
-// ══════════════════════════════════════════
-//  DATA PER ARTIST / SOURCE / DEVICE
-// ══════════════════════════════════════════
-const ARTIST_DATA = {
-  all:          { dauBase:247000, dauAmp:15000, mau:'3.1M', ratio:'7.9%', ret:'38%', conv:'6.2%',
-    donut:[28,22,19,15,10,6],
-    sources:[{n:'Playlist',p:42},{n:'Radio',p:23},{n:'Search',p:18},{n:'Album',p:12},{n:'Artist Page',p:5}],
-    device:[[62,65,61,68],[22,20,24,19],[16,15,15,13]] },
-  'Stormzy':    { dauBase:69000,  dauAmp:8000,  mau:'870K', ratio:'7.9%', ret:'41%', conv:'7.1%',
-    donut:[100,0,0,0,0,0],
-    sources:[{n:'Playlist',p:38},{n:'Radio',p:27},{n:'Search',p:20},{n:'Album',p:11},{n:'Artist Page',p:4}],
-    device:[[58,62,57,65],[26,23,27,22],[16,15,16,13]] },
-  'Dave':       { dauBase:54000,  dauAmp:7000,  mau:'680K', ratio:'8.0%', ret:'43%', conv:'8.2%',
-    donut:[0,100,0,0,0,0],
-    sources:[{n:'Playlist',p:35},{n:'Radio',p:20},{n:'Search',p:25},{n:'Album',p:16},{n:'Artist Page',p:4}],
-    device:[[55,58,53,60],[28,25,30,25],[17,17,17,15]] },
-  'Central Cee':{ dauBase:47000,  dauAmp:9000,  mau:'589K', ratio:'8.0%', ret:'45%', conv:'5.9%',
-    donut:[0,0,100,0,0,0],
-    sources:[{n:'Playlist',p:50},{n:'Radio',p:18},{n:'Search',p:22},{n:'Album',p:7},{n:'Artist Page',p:3}],
-    device:[[70,72,68,75],[18,16,20,14],[12,12,12,11]] },
-  'Little Simz':{ dauBase:37000,  dauAmp:6000,  mau:'465K', ratio:'7.9%', ret:'39%', conv:'9.1%',
-    donut:[0,0,0,100,0,0],
-    sources:[{n:'Playlist',p:40},{n:'Radio',p:15},{n:'Search',p:28},{n:'Album',p:13},{n:'Artist Page',p:4}],
-    device:[[60,62,58,65],[24,22,26,21],[16,16,16,14]] },
-  'Aitch':      { dauBase:25000,  dauAmp:5000,  mau:'310K', ratio:'8.1%', ret:'36%', conv:'5.2%',
-    donut:[0,0,0,0,100,0],
-    sources:[{n:'Playlist',p:55},{n:'Radio',p:25},{n:'Search',p:12},{n:'Album',p:6},{n:'Artist Page',p:2}],
-    device:[[68,70,65,72],[20,18,22,17],[12,12,13,11]] },
-  'slowthai':   { dauBase:15000,  dauAmp:4000,  mau:'186K', ratio:'8.1%', ret:'35%', conv:'4.8%',
-    donut:[0,0,0,0,0,100],
-    sources:[{n:'Playlist',p:33},{n:'Radio',p:22},{n:'Search',p:30},{n:'Album',p:11},{n:'Artist Page',p:4}],
-    device:[[64,66,62,68],[22,20,24,19],[14,14,14,13]] },
-};
-
-const SOURCE_DELTA = {
-  all:     { dauBase:247000, dauAmp:15000, mau:'3.1M', ratio:'7.9%', ret:'38%', conv:'6.2%' },
-  Playlist:{ dauBase:104000, dauAmp:10000, mau:'1.3M', ratio:'8.0%', ret:'42%', conv:'7.1%' },
-  Radio:   { dauBase:57000,  dauAmp:7000,  mau:'713K', ratio:'8.0%', ret:'35%', conv:'4.9%' },
-  Search:  { dauBase:44000,  dauAmp:6000,  mau:'558K', ratio:'7.9%', ret:'31%', conv:'5.5%' },
-  Album:   { dauBase:30000,  dauAmp:5000,  mau:'370K', ratio:'8.1%', ret:'44%', conv:'8.3%' },
-};
-
-const DEVICE_DELTA = {
-  all:            { dauBase:247000, dauAmp:15000, mau:'3.1M', ratio:'7.9%', ret:'38%', conv:'6.2%' },
-  Mobile:         { dauBase:153000, dauAmp:12000, mau:'1.9M', ratio:'8.1%', ret:'36%', conv:'5.8%' },
-  Desktop:        { dauBase:54000,  dauAmp:7000,  mau:'680K', ratio:'7.9%', ret:'43%', conv:'7.5%' },
-  'Smart Speaker':{ dauBase:40000,  dauAmp:5000,  mau:'496K', ratio:'8.1%', ret:'32%', conv:'4.1%' },
-};
-
-const PERIOD_MULT = { '7d':0.85, '30d':1.0, '90d':1.05, '1y':1.12 };
-const PERIOD_DAYS = { '7d':7, '30d':30, '90d':60, '1y':60 };
-
-let currentPeriod = '30d';
-let dauChart, donutChart, deviceChart;
-
-// ── helper ──
-function fmtNum(n) {
-  if (n >= 1000000) return (n/1000000).toFixed(1)+'M';
-  if (n >= 1000)    return Math.round(n/1000)+'K';
-  return String(n);
+function sortTable(col){
+  if(sortCol===col) sortDir=sortDir==='asc'?'desc':'asc';
+  else{sortCol=col;sortDir='desc';}
+  document.querySelectorAll('.tbl th').forEach(th=>{th.classList.remove('sort-asc','sort-desc');});
+  const colMap={name:1,s:2,cmp:3,e:4};
+  const th=document.querySelectorAll('.tbl th')[colMap[col]];
+  if(th) th.classList.add(sortDir==='asc'?'sort-asc':'sort-desc');
+  buildTable(document.getElementById('f-artist').value);
 }
 
-// ── APPLY ALL FILTERS ──
-function applyFilters() {
-  const artist = document.getElementById('f-artist').value;
-  const source = document.getElementById('f-source').value;
-  const device = document.getElementById('f-device').value;
-  const mult   = PERIOD_MULT[currentPeriod] || 1;
-  const days   = PERIOD_DAYS[currentPeriod] || 30;
-
-  // priority: artist > source > device
-  const ad = ARTIST_DATA[artist] || ARTIST_DATA['all'];
-  const kpi = artist !== 'all' ? ad
-            : source !== 'all' ? (SOURCE_DELTA[source] || SOURCE_DELTA['all'])
-            : (DEVICE_DELTA[device] || DEVICE_DELTA['all']);
-
-  // update KPI cards
-  document.getElementById('v-dau').textContent   = fmtNum(Math.round(kpi.dauBase * mult));
-  document.getElementById('v-mau').textContent   = kpi.mau;
-  document.getElementById('v-ratio').textContent = kpi.ratio;
-  document.getElementById('v-ret').textContent   = kpi.ret;
-  document.getElementById('v-conv').textContent  = kpi.conv;
-
-  // DAU chart
-  rebuildDAU(days, kpi.dauBase * mult, kpi.dauAmp);
-
-  // donut (artist-driven)
-  rebuildDonut(ad.donut);
-
-  // sources (artist-driven)
-  updateSources(ad.sources);
-
-  // device chart (artist-driven)
-  rebuildDevice(ad.device);
-
-  // tracks table (filter by artist)
-  const filtered = artist === 'all' ? TRACKS : TRACKS.filter(t => t.artist === artist);
-  buildTable(filtered.length ? filtered : TRACKS);
+function setPeriod(p,btn){
+  document.querySelectorAll('#seg button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');currentPeriod=p;applyFilters();
+}
+function resetAll(){
+  document.getElementById('f-artist').value='all';
+  document.getElementById('f-source').value='all';
+  document.getElementById('f-device').value='all';
+  document.querySelectorAll('#seg button').forEach((b,i)=>b.classList.toggle('on',i===1));
+  currentPeriod='30d';sortCol='s';sortDir='desc';applyFilters();
 }
 
-function setPeriod(p, btn) {
-  document.querySelectorAll('#seg button').forEach(b => b.classList.remove('on'));
-  btn.classList.add('on');
-  currentPeriod = p;
-  applyFilters();
-}
-
-function resetAll() {
-  document.getElementById('f-artist').value = 'all';
-  document.getElementById('f-source').value = 'all';
-  document.getElementById('f-device').value = 'all';
-  document.querySelectorAll('#seg button').forEach((b,i) => b.classList.toggle('on', i===1));
-  currentPeriod = '30d';
-  applyFilters();
-}
-
-// ── REBUILD CHARTS ──
-function rebuildDAU(n, base, amp) {
-  const labels = Array.from({length:n}, (_,i) => {
-    const d = new Date(); d.setDate(d.getDate()-n+1+i);
-    return d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'});
+function buildHeatmap(){
+  const cohorts=['Янв','Фев','Мар','Апр','Май','Июн'];
+  const cols=['D0','D1','D3','D7','D14','D21','D28','D30'];
+  const data=[[100,55,44,38,28,22,18,16],[100,58,46,40,30,25,20,17],[100,61,49,42,33,27,22,19],[100,57,45,39,31,24,19,16],[100,63,51,44,35,29,24,21],[100,60,48,41,32,26,21,18]];
+  const el=document.getElementById('heatmap');
+  const g=document.createElement('div');g.className='hm-grid';
+  g.innerHTML='<div></div>'+cols.map(c=>`<div class="hm-head">${c}</div>`).join('');
+  data.forEach((row,ri)=>{
+    g.innerHTML+=`<div class="hm-row-label">${cohorts[ri]}</div>`;
+    row.forEach(v=>{const a=(v/100)*0.9;g.innerHTML+=`<div class="hm-cell" style="background:rgba(30,215,96,${a});color:${a>0.5?'#000':'#e2e8f0'}" title="${v}%">${v}%</div>`;});
   });
-  const dau   = smooth(n, base, amp);
-  const mau10 = smooth(n, base * 12.5, amp * 3);
-  if (dauChart) dauChart.destroy();
-  const ctx = document.getElementById('c-dau').getContext('2d');
-  const grad = ctx.createLinearGradient(0,0,0,180);
-  grad.addColorStop(0,'rgba(30,215,96,0.2)');
-  grad.addColorStop(1,'rgba(30,215,96,0.0)');
-  dauChart = new Chart(ctx, {
-    type:'line', data:{ labels, datasets:[
-      { label:'DAU', data:dau, borderColor:G.green, backgroundColor:grad, borderWidth:2, pointRadius:0, fill:true, tension:0.4 },
-      { label:'MAU/10', data:mau10, borderColor:G.cyan, backgroundColor:'transparent', borderWidth:1.5, borderDash:[5,4], pointRadius:0, tension:0.4 }
-    ]},
-    options:{ responsive:true, maintainAspectRatio:false, animation:false,
-      plugins:{ legend:{ labels:{boxWidth:10,padding:14}}, tooltip:{ backgroundColor:'#141c27', borderColor:'rgba(255,255,255,.08)', borderWidth:1, callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y.toLocaleString()}`}}},
-      scales:{ x:{grid:{color:gridColor,drawBorder:false},ticks:{maxTicksLimit:8}}, y:{grid:{color:gridColor,drawBorder:false},ticks:{callback:v=>v>=1000?(v/1000).toFixed(0)+'K':v}}}}
-  });
+  el.appendChild(g);
 }
 
-function rebuildDonut(shares) {
-  const labels = ['Stormzy','Dave','Central Cee','Little Simz','Aitch','slowthai'];
-  const colors = [G.green, G.cyan, G.yellow, G.purple, G.red, '#ff914d'];
-  if (donutChart) donutChart.destroy();
-  donutChart = new Chart(document.getElementById('c-donut').getContext('2d'), {
-    type:'doughnut', data:{ labels, datasets:[{ data:shares, backgroundColor:colors, borderColor:'#141c27', borderWidth:3 }]},
-    options:{ responsive:true, maintainAspectRatio:false, animation:false, cutout:'65%',
-      plugins:{ legend:{position:'bottom',labels:{boxWidth:8,padding:8,font:{size:9}}}, tooltip:{callbacks:{label:c=>` ${c.label}: ${c.parsed}%`}}}}
-  });
-}
-
-function updateSources(items) {
-  const colorMap = { Playlist:G.green, Radio:G.cyan, Search:G.yellow, Album:G.purple, 'Artist Page':G.red };
-  document.getElementById('sources').innerHTML = items.map(s => `
-    <div class="src-row">
-      <div class="src-info"><span class="src-name">${s.n}</span><span class="src-pct">${s.p}%</span></div>
-      <div class="src-track"><div class="src-fill" style="width:${s.p}%;background:${colorMap[s.n]||G.green}"></div></div>
+function buildFunnel(){
+  const stages=[{l:'Free Users',v:100,p:'100%',c:G.cyan},{l:'Trial Start',v:24,p:'24%',c:G.yellow},{l:'Premium',v:14,p:'14%',c:G.green},{l:'Retained 30d',v:9,p:'9%',c:G.purple}];
+  document.getElementById('funnel').innerHTML=stages.map(s=>`
+    <div class="f-row">
+      <div class="f-label">${s.l}</div>
+      <div class="f-track"><div class="f-bar" style="width:${s.v}%;background:${s.c}22;border-left:3px solid ${s.c}"><span style="color:${s.c}">${s.v}K</span></div></div>
+      <div class="f-pct">${s.p}</div>
     </div>`).join('');
 }
 
-function rebuildDevice(rows) {
-  if (deviceChart) deviceChart.destroy();
-  deviceChart = new Chart(document.getElementById('c-device').getContext('2d'), {
-    type:'bar', data:{ labels:['Нед 1','Нед 2','Нед 3','Нед 4'], datasets:[
-      { label:'Mobile',        data:rows[0], backgroundColor:G.green,  borderRadius:3 },
-      { label:'Desktop',       data:rows[1], backgroundColor:G.cyan,   borderRadius:3 },
-      { label:'Smart Speaker', data:rows[2], backgroundColor:G.purple, borderRadius:3 },
-    ]},
-    options:{ responsive:true, maintainAspectRatio:false, animation:false,
-      plugins:{ legend:{ labels:{boxWidth:10,padding:12}}},
-      scales:{ x:{stacked:true,grid:{display:false}}, y:{stacked:true,grid:{color:gridColor,drawBorder:false},ticks:{callback:v=>v+'%'}}}}
-  });
-}
+document.getElementById('f-artist').addEventListener('change',applyFilters);
+document.getElementById('f-source').addEventListener('change',applyFilters);
+document.getElementById('f-device').addEventListener('change',applyFilters);
 
-// ── INIT ──
-rebuildDAU(30, 247000, 15000);
-rebuildDonut(ARTIST_DATA['all'].donut);
-rebuildDevice(ARTIST_DATA['all'].device);
 buildHeatmap();
-updateSources(ARTIST_DATA['all'].sources);
 buildFunnel();
-buildTable(TRACKS);
-
-document.getElementById('f-artist').addEventListener('change', applyFilters);
-document.getElementById('f-source').addEventListener('change', applyFilters);
-document.getElementById('f-device').addEventListener('change', applyFilters);
+applyFilters();
 </script>
 </body>
 </html>
