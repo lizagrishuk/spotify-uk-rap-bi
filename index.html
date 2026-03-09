@@ -442,40 +442,192 @@ function buildTable() {
   }).join('');
 }
 
-// ── Filters ──
-const KPI = {
-  '7d': {dau:'231K',mau:'2.9M',ratio:'7.5%',ret:'41%',conv:'5.8%'},
-  '30d':{dau:'247K',mau:'3.1M',ratio:'7.9%',ret:'38%',conv:'6.2%'},
-  '90d':{dau:'258K',mau:'3.3M',ratio:'8.1%',ret:'35%',conv:'6.7%'},
-  '1y': {dau:'271K',mau:'3.5M',ratio:'8.4%',ret:'32%',conv:'7.1%'},
+// ══════════════════════════════════════════
+//  DATA PER ARTIST / SOURCE / DEVICE
+// ══════════════════════════════════════════
+const ARTIST_DATA = {
+  all:          { dauBase:247000, dauAmp:15000, mau:'3.1M', ratio:'7.9%', ret:'38%', conv:'6.2%',
+    donut:[28,22,19,15,10,6],
+    sources:[{n:'Playlist',p:42},{n:'Radio',p:23},{n:'Search',p:18},{n:'Album',p:12},{n:'Artist Page',p:5}],
+    device:[[62,65,61,68],[22,20,24,19],[16,15,15,13]] },
+  'Stormzy':    { dauBase:69000,  dauAmp:8000,  mau:'870K', ratio:'7.9%', ret:'41%', conv:'7.1%',
+    donut:[100,0,0,0,0,0],
+    sources:[{n:'Playlist',p:38},{n:'Radio',p:27},{n:'Search',p:20},{n:'Album',p:11},{n:'Artist Page',p:4}],
+    device:[[58,62,57,65],[26,23,27,22],[16,15,16,13]] },
+  'Dave':       { dauBase:54000,  dauAmp:7000,  mau:'680K', ratio:'8.0%', ret:'43%', conv:'8.2%',
+    donut:[0,100,0,0,0,0],
+    sources:[{n:'Playlist',p:35},{n:'Radio',p:20},{n:'Search',p:25},{n:'Album',p:16},{n:'Artist Page',p:4}],
+    device:[[55,58,53,60],[28,25,30,25],[17,17,17,15]] },
+  'Central Cee':{ dauBase:47000,  dauAmp:9000,  mau:'589K', ratio:'8.0%', ret:'45%', conv:'5.9%',
+    donut:[0,0,100,0,0,0],
+    sources:[{n:'Playlist',p:50},{n:'Radio',p:18},{n:'Search',p:22},{n:'Album',p:7},{n:'Artist Page',p:3}],
+    device:[[70,72,68,75],[18,16,20,14],[12,12,12,11]] },
+  'Little Simz':{ dauBase:37000,  dauAmp:6000,  mau:'465K', ratio:'7.9%', ret:'39%', conv:'9.1%',
+    donut:[0,0,0,100,0,0],
+    sources:[{n:'Playlist',p:40},{n:'Radio',p:15},{n:'Search',p:28},{n:'Album',p:13},{n:'Artist Page',p:4}],
+    device:[[60,62,58,65],[24,22,26,21],[16,16,16,14]] },
+  'Aitch':      { dauBase:25000,  dauAmp:5000,  mau:'310K', ratio:'8.1%', ret:'36%', conv:'5.2%',
+    donut:[0,0,0,0,100,0],
+    sources:[{n:'Playlist',p:55},{n:'Radio',p:25},{n:'Search',p:12},{n:'Album',p:6},{n:'Artist Page',p:2}],
+    device:[[68,70,65,72],[20,18,22,17],[12,12,13,11]] },
+  'slowthai':   { dauBase:15000,  dauAmp:4000,  mau:'186K', ratio:'8.1%', ret:'35%', conv:'4.8%',
+    donut:[0,0,0,0,0,100],
+    sources:[{n:'Playlist',p:33},{n:'Radio',p:22},{n:'Search',p:30},{n:'Album',p:11},{n:'Artist Page',p:4}],
+    device:[[64,66,62,68],[22,20,24,19],[14,14,14,13]] },
 };
-function setPeriod(p, btn) {
-  document.querySelectorAll('#seg button').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on');
-  const k = KPI[p];
-  document.getElementById('v-dau').textContent   = k.dau;
-  document.getElementById('v-mau').textContent   = k.mau;
-  document.getElementById('v-ratio').textContent = k.ratio;
-  document.getElementById('v-ret').textContent   = k.ret;
-  document.getElementById('v-conv').textContent  = k.conv;
-  buildDAU({'7d':7,'30d':30,'90d':60,'1y':60}[p]);
+
+const SOURCE_DELTA = {
+  all:     { dauBase:247000, dauAmp:15000, mau:'3.1M', ratio:'7.9%', ret:'38%', conv:'6.2%' },
+  Playlist:{ dauBase:104000, dauAmp:10000, mau:'1.3M', ratio:'8.0%', ret:'42%', conv:'7.1%' },
+  Radio:   { dauBase:57000,  dauAmp:7000,  mau:'713K', ratio:'8.0%', ret:'35%', conv:'4.9%' },
+  Search:  { dauBase:44000,  dauAmp:6000,  mau:'558K', ratio:'7.9%', ret:'31%', conv:'5.5%' },
+  Album:   { dauBase:30000,  dauAmp:5000,  mau:'370K', ratio:'8.1%', ret:'44%', conv:'8.3%' },
+};
+
+const DEVICE_DELTA = {
+  all:            { dauBase:247000, dauAmp:15000, mau:'3.1M', ratio:'7.9%', ret:'38%', conv:'6.2%' },
+  Mobile:         { dauBase:153000, dauAmp:12000, mau:'1.9M', ratio:'8.1%', ret:'36%', conv:'5.8%' },
+  Desktop:        { dauBase:54000,  dauAmp:7000,  mau:'680K', ratio:'7.9%', ret:'43%', conv:'7.5%' },
+  'Smart Speaker':{ dauBase:40000,  dauAmp:5000,  mau:'496K', ratio:'8.1%', ret:'32%', conv:'4.1%' },
+};
+
+const PERIOD_MULT = { '7d':0.85, '30d':1.0, '90d':1.05, '1y':1.12 };
+const PERIOD_DAYS = { '7d':7, '30d':30, '90d':60, '1y':60 };
+
+let currentPeriod = '30d';
+let dauChart, donutChart, deviceChart;
+
+// ── helper ──
+function fmtNum(n) {
+  if (n >= 1000000) return (n/1000000).toFixed(1)+'M';
+  if (n >= 1000)    return Math.round(n/1000)+'K';
+  return String(n);
 }
+
+// ── APPLY ALL FILTERS ──
+function applyFilters() {
+  const artist = document.getElementById('f-artist').value;
+  const source = document.getElementById('f-source').value;
+  const device = document.getElementById('f-device').value;
+  const mult   = PERIOD_MULT[currentPeriod] || 1;
+  const days   = PERIOD_DAYS[currentPeriod] || 30;
+
+  // priority: artist > source > device
+  const ad = ARTIST_DATA[artist] || ARTIST_DATA['all'];
+  const kpi = artist !== 'all' ? ad
+            : source !== 'all' ? (SOURCE_DELTA[source] || SOURCE_DELTA['all'])
+            : (DEVICE_DELTA[device] || DEVICE_DELTA['all']);
+
+  // update KPI cards
+  document.getElementById('v-dau').textContent   = fmtNum(Math.round(kpi.dauBase * mult));
+  document.getElementById('v-mau').textContent   = kpi.mau;
+  document.getElementById('v-ratio').textContent = kpi.ratio;
+  document.getElementById('v-ret').textContent   = kpi.ret;
+  document.getElementById('v-conv').textContent  = kpi.conv;
+
+  // DAU chart
+  rebuildDAU(days, kpi.dauBase * mult, kpi.dauAmp);
+
+  // donut (artist-driven)
+  rebuildDonut(ad.donut);
+
+  // sources (artist-driven)
+  updateSources(ad.sources);
+
+  // device chart (artist-driven)
+  rebuildDevice(ad.device);
+
+  // tracks table (filter by artist)
+  const filtered = artist === 'all' ? TRACKS : TRACKS.filter(t => t.artist === artist);
+  buildTable(filtered.length ? filtered : TRACKS);
+}
+
+function setPeriod(p, btn) {
+  document.querySelectorAll('#seg button').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  currentPeriod = p;
+  applyFilters();
+}
+
 function resetAll() {
   document.getElementById('f-artist').value = 'all';
   document.getElementById('f-source').value = 'all';
   document.getElementById('f-device').value = 'all';
-  document.querySelectorAll('#seg button').forEach((b,i)=>b.classList.toggle('on',i===1));
-  buildDAU(30);
-  const k = KPI['30d'];
-  document.getElementById('v-dau').textContent   = k.dau;
-  document.getElementById('v-mau').textContent   = k.mau;
-  document.getElementById('v-ratio').textContent = k.ratio;
-  document.getElementById('v-ret').textContent   = k.ret;
-  document.getElementById('v-conv').textContent  = k.conv;
+  document.querySelectorAll('#seg button').forEach((b,i) => b.classList.toggle('on', i===1));
+  currentPeriod = '30d';
+  applyFilters();
 }
 
-buildDAU(30); buildDonut(); buildDevice();
-buildHeatmap(); buildSources(); buildFunnel(); buildTable();
+// ── REBUILD CHARTS ──
+function rebuildDAU(n, base, amp) {
+  const labels = Array.from({length:n}, (_,i) => {
+    const d = new Date(); d.setDate(d.getDate()-n+1+i);
+    return d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'});
+  });
+  const dau   = smooth(n, base, amp);
+  const mau10 = smooth(n, base * 12.5, amp * 3);
+  if (dauChart) dauChart.destroy();
+  const ctx = document.getElementById('c-dau').getContext('2d');
+  const grad = ctx.createLinearGradient(0,0,0,180);
+  grad.addColorStop(0,'rgba(30,215,96,0.2)');
+  grad.addColorStop(1,'rgba(30,215,96,0.0)');
+  dauChart = new Chart(ctx, {
+    type:'line', data:{ labels, datasets:[
+      { label:'DAU', data:dau, borderColor:G.green, backgroundColor:grad, borderWidth:2, pointRadius:0, fill:true, tension:0.4 },
+      { label:'MAU/10', data:mau10, borderColor:G.cyan, backgroundColor:'transparent', borderWidth:1.5, borderDash:[5,4], pointRadius:0, tension:0.4 }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false, animation:false,
+      plugins:{ legend:{ labels:{boxWidth:10,padding:14}}, tooltip:{ backgroundColor:'#141c27', borderColor:'rgba(255,255,255,.08)', borderWidth:1, callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y.toLocaleString()}`}}},
+      scales:{ x:{grid:{color:gridColor,drawBorder:false},ticks:{maxTicksLimit:8}}, y:{grid:{color:gridColor,drawBorder:false},ticks:{callback:v=>v>=1000?(v/1000).toFixed(0)+'K':v}}}}
+  });
+}
+
+function rebuildDonut(shares) {
+  const labels = ['Stormzy','Dave','Central Cee','Little Simz','Aitch','slowthai'];
+  const colors = [G.green, G.cyan, G.yellow, G.purple, G.red, '#ff914d'];
+  if (donutChart) donutChart.destroy();
+  donutChart = new Chart(document.getElementById('c-donut').getContext('2d'), {
+    type:'doughnut', data:{ labels, datasets:[{ data:shares, backgroundColor:colors, borderColor:'#141c27', borderWidth:3 }]},
+    options:{ responsive:true, maintainAspectRatio:false, animation:false, cutout:'65%',
+      plugins:{ legend:{position:'bottom',labels:{boxWidth:8,padding:8,font:{size:9}}}, tooltip:{callbacks:{label:c=>` ${c.label}: ${c.parsed}%`}}}}
+  });
+}
+
+function updateSources(items) {
+  const colorMap = { Playlist:G.green, Radio:G.cyan, Search:G.yellow, Album:G.purple, 'Artist Page':G.red };
+  document.getElementById('sources').innerHTML = items.map(s => `
+    <div class="src-row">
+      <div class="src-info"><span class="src-name">${s.n}</span><span class="src-pct">${s.p}%</span></div>
+      <div class="src-track"><div class="src-fill" style="width:${s.p}%;background:${colorMap[s.n]||G.green}"></div></div>
+    </div>`).join('');
+}
+
+function rebuildDevice(rows) {
+  if (deviceChart) deviceChart.destroy();
+  deviceChart = new Chart(document.getElementById('c-device').getContext('2d'), {
+    type:'bar', data:{ labels:['Нед 1','Нед 2','Нед 3','Нед 4'], datasets:[
+      { label:'Mobile',        data:rows[0], backgroundColor:G.green,  borderRadius:3 },
+      { label:'Desktop',       data:rows[1], backgroundColor:G.cyan,   borderRadius:3 },
+      { label:'Smart Speaker', data:rows[2], backgroundColor:G.purple, borderRadius:3 },
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false, animation:false,
+      plugins:{ legend:{ labels:{boxWidth:10,padding:12}}},
+      scales:{ x:{stacked:true,grid:{display:false}}, y:{stacked:true,grid:{color:gridColor,drawBorder:false},ticks:{callback:v=>v+'%'}}}}
+  });
+}
+
+// ── INIT ──
+rebuildDAU(30, 247000, 15000);
+rebuildDonut(ARTIST_DATA['all'].donut);
+rebuildDevice(ARTIST_DATA['all'].device);
+buildHeatmap();
+updateSources(ARTIST_DATA['all'].sources);
+buildFunnel();
+buildTable(TRACKS);
+
+document.getElementById('f-artist').addEventListener('change', applyFilters);
+document.getElementById('f-source').addEventListener('change', applyFilters);
+document.getElementById('f-device').addEventListener('change', applyFilters);
 </script>
 </body>
 </html>
