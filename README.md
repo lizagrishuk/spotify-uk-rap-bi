@@ -3,14 +3,10 @@
 > Учебный BI-проект: SQL-витрина данных + ETL-пайплайн + интерактивный дашборд  
 > для анализа аудитории британских рэперов на основе публичных датасетов Spotify.
 
-![Dashboard Preview](dashboard/preview.png)
-[![Python](https://img.shields.io/badge/Python-3.9+-blue)](https://python.org)
-[![SQLite](https://img.shields.io/badge/DB-SQLite%20%2F%20PostgreSQL-orange)](https://sqlite.org)
-[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
 ---
 
-## 📦 Структура проекта
+## Структура проекта
 
 ```
 spotify-uk-rap-bi/
@@ -33,15 +29,13 @@ spotify-uk-rap-bi/
 
 ---
 
-## 📊 Источники данных
+## Источники данных
 
 | # | Датасет | Строк | Ключевые поля |
 |---|---------|-------|---------------|
 | 1 | [Spotify Tracks Dataset](https://www.kaggle.com/datasets/maharshipandya/-spotify-tracks-dataset) | 114K | track_id, artists, popularity, danceability, energy, valence, tempo |
 | 2 | [Most Streamed Songs 2024](https://www.kaggle.com/datasets/nelgiriyewithana/most-streamed-spotify-songs-2024) | ~4K | track, artist, spotify_streams, release_date |
 
-> ⚠️ **Важно:** DAU/MAU/Retention в дашборде — расчётные метрики (симуляция).  
-> Реальные данные об аудитории недоступны публично — это внутренние метрики Spotify.
 
 ---
 
@@ -91,7 +85,7 @@ python -m http.server 8080
 
 ---
 
-## 🗄️ Архитектура данных
+##  Архитектура данных
 
 ```
 raw.streams          raw.artists          raw.tracks
